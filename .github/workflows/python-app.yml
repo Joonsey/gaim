@@ -26,7 +26,7 @@ jobs:
     - name: Install requirements
       run: |
            pip install -r requirements.txt
-           pip install pywin32 pefile pyinstaller
+           pip install pefile pyinstaller
            pip install pyinstaller
     - name: Compile
       run: |
