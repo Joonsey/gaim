@@ -25,7 +25,12 @@ jobs:
         python -m pip install --upgrade pip 
     - name: Install requirements
       run: |
-        python -m pip install -r requirements.txt
+           pip install -r requirements.txt
+           pip install pywin32 pefile pyinstaller
+           pip install pyinstaller
+    - name: Compile
+      run: |
+        python -m pyinstaller main.py --noconfirm -F --noconsole
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.2
       with:
