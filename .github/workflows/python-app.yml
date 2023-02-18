@@ -25,15 +25,17 @@ jobs:
         python -m pip install --upgrade pip 
     - name: Install requirements
       run: |
-        python -m pip install -r requirements.txt
+           pip install -r requirements.txt
+           pip install pefile pyinstaller
+           pip install pyinstaller
     - name: Compile
       run: |
-        python -m pyinstaller main.py --noconfirm -F --noconsole
+        pyinstaller main.py --noconfirm -F --noconsole
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.2
       with:
         # Artifact name
         name: gaim
         # A file, directory or wildcard pattern that describes what to upload
-        path: dist/main.*
+        path: dist
         # The desired behavior if no files are found using the provided path.
