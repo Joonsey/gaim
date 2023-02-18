@@ -1,6 +1,7 @@
 import socket, _thread
 decoder = 'utf-8'
 PACKET_SIZE = 16000
+PACKET_SUFFIX = b' _ '
 
 def run_in_thread(func: ((...))):
     def run(*k, **kw):
@@ -20,7 +21,7 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.addr = (ip, port)
         self.identifier = b"\x00"
-        self.responses = {}
+        self.responses = []
 
     def connect(self):
         try:
@@ -33,7 +34,7 @@ class Client:
             return False
 
     @run_in_thread
-    def listen(self):
+    def poll(self):
         try:
             response = self.client.recv(PACKET_SIZE).decode(decoder)
             return response
@@ -44,9 +45,10 @@ class Client:
     @run_in_thread
     def send(self, data):
         try:
-            self.client.sendto(data, self.addr)
+            self.client.sendto(self.identifier + data + PACKET_SUFFIX, self.addr)
             response = self.client.recv(PACKET_SIZE)
-            self.responses = response
+            self.responses = response.split(b" _ ")
+            self.responses.pop() # removes trailing element after split
         except socket.error as e:
             print(e)
 
@@ -69,20 +71,16 @@ class Server:
         self.port = port
         self.addr = (self.ip, self.port)
         self.all_players = {}
-        self.addresses = []
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.addr)
 
     def handle_data(self, data: bytes) -> bytes:
-        identification = data[0].to_bytes(1, 'little')
-        if identification == b'\x00':
+        identification = data[0]
+        if data == b'\x00':
             identification = IOTA()
             return identification
         else:
-            location = data[1:3]
-            color = data[3:6]
-            direction = data[6]
             self.all_players[identification] = data[1:]
             return self.format_all_players()
 
@@ -90,7 +88,7 @@ class Server:
         players = self.all_players
         response = b''
         for id in players.keys():
-            response += id
+            response += id.to_bytes(1, 'little')
             response += players[id]
         return response
 
@@ -98,17 +96,12 @@ class Server:
         print("server is listening...\n")
         while True:
             try:
-                response, address = self.sock.recvfrom(PACKET_SIZE)
-                if address not in self.addresses:
-                    self.addresses.append(address)
-                    print(f"new connection from {address}")
-                    self.sock.sendto(IOTA(), address)
+                request, address = self.sock.recvfrom(PACKET_SIZE)
+                response = self.handle_data(request)
+                self.sock.sendto(response, address)
 
-                print(response)
             except Exception as e:
                 self.sock.close()
                 print("error handled succesfully")
-                print(e)
-                break
-        exit(1)
+                raise e
 

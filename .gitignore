@@ -1,1 +1,8 @@
 __pychache__/*
+__pychache__/
+dist/*
+dist
+build/*
+build
+
+*.spec

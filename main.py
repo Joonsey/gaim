@@ -2,7 +2,7 @@ from network import Client
 import pyglet
 import sys
 
-IP = "0.0.0.0"
+IP = "LOCALHOST"
 PORT = 5555
 FPS = 120
 TPS = 20
@@ -58,6 +58,7 @@ class Game(pyglet.window.Window):
         self.player_batch = pyglet.graphics.Batch()
 
         self.player = Player(100, 100, batch=self.player_batch)
+        self.players = {}
 
         self.keyboard = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keyboard)
@@ -69,12 +70,23 @@ class Game(pyglet.window.Window):
 
     def draw(self, dt):
         self.clear()
-        self.player_batch.draw() # TODO change this to batch rendering
+        self.player_batch.draw() 
 
     def update(self, dt):
         self.player.update(self.keyboard, dt)
         self.network_client.send(position_to_packet(self.player.position))
+        self.get_other_players()
 
+    def get_other_players(self):
+        peepos = self.network_client.responses
+        for peepo in peepos:
+            id = peepo[0]
+            if id == int.from_bytes(self.network_client.identifier, "little"):
+                continue
+            x = int.from_bytes(peepo[1:3], "little")
+            y = int.from_bytes(peepo[5:-1], "little")
+            self.players[id] = Player(x, y, batch=self.player_batch)
+        return self.players
 
     def client_events(self, keyboard):
         from pyglet.window import key
