@@ -9,6 +9,8 @@ TPS = 20
 WIDTH = 1080
 HEIGHT = 720
 
+SPEED = 120
+
 BYTEORDER = "little"
 POSITION_BYTE_LEN = 4
 MAX_POSITION_BYTE_VAL = POSITION_BYTE_LEN **16
@@ -27,7 +29,7 @@ class Player():
     def _update_pos(self, x, y, scroll):
         self.x = x
         self.y = y
-        self.position = self.x, self.y
+        self.position = int(self.x), int(self.y)
         self._rect.x = x - scroll[0]
         self._rect.y = y - scroll[1]
 
@@ -35,19 +37,19 @@ class Player():
         from pyglet.window import key
 
         if keyboard[key.W]:
-            self.y += 10
+            self.y += SPEED * dt
 
         if keyboard[key.S]:
-            self.y -= 10
+            self.y -= SPEED * dt
 
         if keyboard[key.A]:
-            self.x -= 10
+            self.x -= SPEED * dt
 
         if keyboard[key.D]:
-            self.x += 10
+            self.x += SPEED * dt
 
-        #if keyboard[key.Q]:
-            #sys.exit()
+        if keyboard[key.Q]:
+            sys.exit()
 
         self._update_pos(self.x, self.y, scroll)
 
@@ -70,7 +72,7 @@ class Game(pyglet.window.Window):
         self.client_events(self.keyboard)
 
         pyglet.clock.schedule_interval(self.draw, 1/FPS)
-        pyglet.clock.schedule_interval(self.update, 1/TPS)
+        pyglet.clock.schedule_interval(self.update, 1/FPS)
 
     def draw(self, dt):
         self.clear()
