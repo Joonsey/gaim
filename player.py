@@ -1,6 +1,7 @@
 import pyglet
 import sys
 
+from rendergroup import RenderGroup
 from pyglet.gl import *
 from pyglet.graphics import Group
 from pyglet.graphics.shader import Shader, ShaderProgram
@@ -11,6 +12,38 @@ SPEED = 220
 BYTEORDER = "little"
 POSITION_BYTE_LEN = 4
 MAX_POSITION_BYTE_VAL = POSITION_BYTE_LEN **16
+
+
+_vertex_source = """#version 330 core
+    in vec2 position;
+    in vec3 tex_coords;
+    out vec3 texture_coords;
+    uniform float time; 
+    uniform WindowBlock 
+    {                       // This UBO is defined on Window creation, and available
+        mat4 projection;    // in all Shaders. You can modify these matrixes with the
+        mat4 view;          // Window.view and Window.projection properties.
+    } window;  
+    void main()
+    {
+        gl_Position = window.projection * window.view * vec4(position, 1 * time, 1);
+        texture_coords = tex_coords;
+    }
+"""
+
+_fragment_source = """#version 330 core
+    in vec3 texture_coords;
+    out vec4 final_colors;
+    uniform sampler2D our_texture;
+    void main()
+    {
+        final_colors = texture(our_texture, texture_coords.xy);
+    }
+"""
+
+vert_shader = Shader(_vertex_source, 'vertex')
+frag_shader = Shader(_fragment_source, 'fragment')
+shader_program = ShaderProgram(vert_shader, frag_shader)
 
 def create_quad(x, y, texture):
     x2 = x + texture.width
@@ -39,7 +72,8 @@ class Player():
                         self.y,
                         self.texture)),
             tex_coords=('f', 
-                        self.texture.tex_coords)
+                        self.texture.tex_coords),
+                        group=RenderGroup(self.texture, shader_program)
         )
         self.direction = [0,0]
         self.dash_cooldown = 2
