@@ -9,7 +9,7 @@ TPS = 20
 WIDTH = 1080
 HEIGHT = 720
 
-SPEED = 120
+SPEED = 220
 
 BYTEORDER = "little"
 POSITION_BYTE_LEN = 4
@@ -25,6 +25,7 @@ class Player():
         self.batch = batch
         self.position = self.x, self.y
         self._rect = pyglet.shapes.Rectangle(self.x, self.y, 25, 25, color=(255, 255, 0), batch=self.batch)
+        self.direction = [0,0]
 
     def _update_pos(self, x, y, scroll):
         self.x = x
@@ -37,21 +38,41 @@ class Player():
         from pyglet.window import key
 
         if keyboard[key.W]:
-            self.y += SPEED * dt
+            self.direction[1] = 1
 
-        if keyboard[key.S]:
-            self.y -= SPEED * dt
+        elif keyboard[key.S]:
+            self.direction[1] = -1
+
+        else:
+            self.direction[1] = 0
 
         if keyboard[key.A]:
-            self.x -= SPEED * dt
+            self.direction[0] = -1
 
-        if keyboard[key.D]:
-            self.x += SPEED * dt
+        elif keyboard[key.D]:
+            self.direction[0] = 1
+
+        else:
+            self.direction[0] = 0
 
         if keyboard[key.Q]:
             sys.exit()
 
-        self._update_pos(self.x, self.y, scroll)
+        
+        if self.direction[0] and self.direction[1]:
+            self.direction = [i/2 for i in self.direction] #TODO ask leon about this lmao
+            x = self.x + self.direction[0] * SPEED * dt
+            y = self.y + self.direction[1] * SPEED * dt
+        
+        else:
+            x = self.x + self.direction[0] * SPEED * dt
+            y = self.y + self.direction[1] * SPEED * dt
+
+        print(self.direction)
+
+
+        self._update_pos(x, y, scroll)
+
 
 class Game(pyglet.window.Window):
     def __init__(self, *args):
