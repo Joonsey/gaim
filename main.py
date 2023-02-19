@@ -37,10 +37,10 @@ class Player():
         self.position = int(self.x), int(self.y)
         self._rect.x = x - scroll[0]
         self._rect.y = y - scroll[1]
-    
-    def dash(self, speed: int, direction: tuple[float, float], t :float, scroll: tuple, total_t: int = 1) -> float:
+
+    def dash(self, speed: int, direction: list|tuple[float | int, float | int], t :float, scroll: tuple, total_t: float|int = 1) -> float:
         if total_t <= 0:
-            return
+            return self._max_dash_duration
         x = self.x + speed * direction[0] * t
         y = self.y + speed * direction[1] * t
         self._update_pos(x, y, scroll)
@@ -80,12 +80,12 @@ class Player():
         if keyboard[key.Q]:
             sys.exit()
 
-        
+
         if self.direction[0] and self.direction[1]:
             self.direction = [i/2 for i in self.direction] #TODO ask leon about this lmao
             x = self.x + self.direction[0] * SPEED * dt
             y = self.y + self.direction[1] * SPEED * dt
-        
+
         else:
             x = self.x + self.direction[0] * SPEED * dt
             y = self.y + self.direction[1] * SPEED * dt
@@ -98,7 +98,7 @@ class Game(pyglet.window.Window):
     def __init__(self, *args):
         super(Game, self).__init__(*args)
 
-        self.scroll = [int(MAX_POSITION_BYTE_VAL/2), int(MAX_POSITION_BYTE_VAL/2)]
+        self.scroll:list[float]= [int(MAX_POSITION_BYTE_VAL/2), int(MAX_POSITION_BYTE_VAL/2)]
         self.network_client = Client(IP, PORT)
         self.network_client.connect()
 
@@ -119,7 +119,7 @@ class Game(pyglet.window.Window):
 
     def draw(self, dt):
         self.clear()
-        self.player_batch.draw() 
+        self.player_batch.draw()
 
     def update(self, dt):
 
@@ -141,7 +141,7 @@ class Game(pyglet.window.Window):
 
             #print("abs x: ", int.from_bytes(peepo[1:POSITION_BYTE_LEN+1], "little"))
             #print("x, y:", x, y)
-            self.players[id] = Player(x, y, batch=self.player_batch)
+            self.players[id] = Player(int(x), int(y), batch=self.player_batch)
         return self.players
 
     def client_events(self, keyboard, mousehandler):
