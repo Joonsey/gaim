@@ -26,6 +26,10 @@ class Player():
         self.position = self.x, self.y
         self._rect = pyglet.shapes.Rectangle(self.x, self.y, 25, 25, color=(255, 255, 0), batch=self.batch)
         self.direction = [0,0]
+        self.dash_cooldown = 2
+        self.dash_duration = .2
+        self._max_dash_duration = .2
+        self._is_dashing = False
 
     def _update_pos(self, x, y, scroll):
         self.x = x
@@ -33,9 +37,27 @@ class Player():
         self.position = int(self.x), int(self.y)
         self._rect.x = x - scroll[0]
         self._rect.y = y - scroll[1]
+    
+    def dash(self, speed: int, direction: tuple[float, float], t :float, scroll: tuple, total_t: int = 1):
+        if total_t <= 0:
+            return
+        x = self.x + speed * direction[0] * t
+        y = self.y + speed * direction[1] * t
+        self._update_pos(x, y, scroll)
+        return total_t-t if total_t-t > 0 else self._max_dash_duration
 
-    def update(self, keyboard, dt, scroll):
+    def update(self, keyboard, mousehandler, dt, scroll):
         from pyglet.window import key
+        from pyglet.window import mouse
+
+        if self.dash_cooldown > 0: self.dash_cooldown -= dt
+
+        if (mousehandler[mouse.LEFT] and self.dash_cooldown <= 0) or self.dash_duration != self._max_dash_duration:
+            self.dash_cooldown = 2
+            self.dash_duration = self.dash(SPEED*2, self.direction, dt, scroll, self.dash_duration)
+            self._is_dashing = True
+        else:
+            self._is_dashing = False
 
         if keyboard[key.W]:
             self.direction[1] = 1
@@ -68,8 +90,6 @@ class Player():
             x = self.x + self.direction[0] * SPEED * dt
             y = self.y + self.direction[1] * SPEED * dt
 
-        print(self.direction)
-
 
         self._update_pos(x, y, scroll)
 
@@ -88,9 +108,11 @@ class Game(pyglet.window.Window):
         self.players = {}
 
         self.keyboard = pyglet.window.key.KeyStateHandler()
+        self.mouse = pyglet.window.mouse.MouseStateHandler()
+        self.push_handlers(self.mouse)
         self.push_handlers(self.keyboard)
 
-        self.client_events(self.keyboard)
+        self.client_events(self.keyboard, self.mouse)
 
         pyglet.clock.schedule_interval(self.draw, 1/FPS)
         pyglet.clock.schedule_interval(self.update, 1/FPS)
@@ -104,7 +126,7 @@ class Game(pyglet.window.Window):
         self.scroll[0] += (self.player.x - self.scroll[0]- (WIDTH/2)) / 14
         self.scroll[1] += (self.player.y - self.scroll[1]- (HEIGHT/2)) / 14
 
-        self.player.update(self.keyboard, dt, self.scroll)
+        self.player.update(self.keyboard, self.mouse, dt, self.scroll)
         self.network_client.send(position_to_packet(self.player.position))
         self.get_other_players()
 
@@ -122,7 +144,7 @@ class Game(pyglet.window.Window):
             self.players[id] = Player(x, y, batch=self.player_batch)
         return self.players
 
-    def client_events(self, keyboard):
+    def client_events(self, keyboard, mousehandler):
         from pyglet.window import key
 
         if keyboard[key.Q]:
