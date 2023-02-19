@@ -38,7 +38,7 @@ class Player():
         self._rect.x = x - scroll[0]
         self._rect.y = y - scroll[1]
     
-    def dash(self, speed: int, direction: tuple[float, float], t :float, scroll: tuple, total_t: int = 1):
+    def dash(self, speed: int, direction: tuple[float, float], t :float, scroll: tuple, total_t: int = 1) -> float:
         if total_t <= 0:
             return
         x = self.x + speed * direction[0] * t
@@ -46,7 +46,7 @@ class Player():
         self._update_pos(x, y, scroll)
         return total_t-t if total_t-t > 0 else self._max_dash_duration
 
-    def update(self, keyboard, mousehandler, dt, scroll):
+    def handle_movement(self, keyboard, mousehandler, dt, scroll):
         from pyglet.window import key
         from pyglet.window import mouse
 
@@ -126,7 +126,7 @@ class Game(pyglet.window.Window):
         self.scroll[0] += (self.player.x - self.scroll[0]- (WIDTH/2)) / 14
         self.scroll[1] += (self.player.y - self.scroll[1]- (HEIGHT/2)) / 14
 
-        self.player.update(self.keyboard, self.mouse, dt, self.scroll)
+        self.player.handle_movement(self.keyboard, self.mouse, dt, self.scroll)
         self.network_client.send(position_to_packet(self.player.position))
         self.get_other_players()
 
