@@ -71,6 +71,7 @@ class Server:
         self.port = port
         self.addr = (self.ip, self.port)
         self.all_players = {}
+        self.addresses = []
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.addr)
@@ -97,6 +98,10 @@ class Server:
         while True:
             try:
                 request, address = self.sock.recvfrom(PACKET_SIZE)
+
+                if address not in self.addresses:
+                    self.addresses.append(address)
+                    print(f"new connection from {address}!")
                 response = self.handle_data(request)
                 self.sock.sendto(response, address)
 
