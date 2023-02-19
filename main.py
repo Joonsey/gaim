@@ -1,6 +1,7 @@
 from network import Client
 import pyglet
 import sys
+from sys import argv
 
 IP = "84.212.18.137"
 PORT = 5555
@@ -151,6 +152,10 @@ class Game(pyglet.window.Window):
             sys.exit()
 
 if __name__ == "__main__":
+    args = len(argv) > 1
+    if args:
+        if argv[1] == '-l':
+            IP = "localhost"
     game = Game(WIDTH, HEIGHT)
     pyglet.app.run()
 
