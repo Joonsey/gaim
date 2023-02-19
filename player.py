@@ -1,6 +1,11 @@
 import pyglet
 import sys
 
+from pyglet.gl import *
+from pyglet.graphics import Group
+from pyglet.graphics.shader import Shader, ShaderProgram
+
+ASSETS = {"textures": {"player" : "pyglet.png"}}
 
 SPEED = 220
 BYTEORDER = "little"
@@ -21,30 +26,32 @@ class Player():
         self.y = y
         self.batch = batch
         self.position = self.x, self.y
-        self._rect = pyglet.shapes.Rectangle(self.x, self.y, 25, 25, color=(255, 255, 0), batch=self.batch)
-        self.texture = None
-        self.__use_opengl_texture = False
-        self.__vertex_list = None
+        self.texture = pyglet.resource.texture(ASSETS['textures']['player'])
+
+        indices = (0, 1, 2, 0, 2, 3)
+        self.vertex_list = shader_program.vertex_list_indexed(
+            4, GL_TRIANGLES, 
+            indices, 
+            batch,
+            position=('f', 
+                      create_quad(
+                        self.x, 
+                        self.y,
+                        self.texture)),
+            tex_coords=('f', 
+                        self.texture.tex_coords)
+        )
         self.direction = [0,0]
         self.dash_cooldown = 2
         self.dash_duration = .2
         self._max_dash_duration = .2
         self._is_dashing = False
 
-
-    def enable_opengl_texture_rendering(self, enable:bool = True):
-        self._rect = None
-        self.__use_opengl_texture = enable
-
     def _update_pos(self, x, y, scroll):
         self.x = x
         self.y = y
         self.position = int(self.x), int(self.y)
-        if not self.__use_opengl_texture:
-            self._rect.x = x - scroll[0]
-            self._rect.y = y - scroll[1]
-        else:
-            self.__vertex_list = create_quad(x, y, self.texture)
+        self.vertex_list = create_quad(x - scroll[0], y - scroll[1], self.texture)
 
     def dash(self, speed: int, direction: list|tuple[float | int, float | int], t :float, scroll: tuple, total_t: float|int = 1) -> float:
         if total_t <= 0:
