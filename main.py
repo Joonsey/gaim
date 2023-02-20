@@ -1,4 +1,3 @@
-from pickle import NEWOBJ
 from network import Client
 import pyglet
 import sys
@@ -22,7 +21,46 @@ NETWORK_ORDER = {
     "spawn_particle" : b"\xff",
     "hostile" : b"\x02",
 }
+world_data = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+]
 
+TILESIZE = 32
+
+class Tile:
+    def __init__(self, x, y, width, height, color, batch) -> None:
+        self.rect = pyglet.shapes.Rectangle(x, y, width, height, color, batch)
+        self.relative_pos = (x, y)
+
+class World:
+    def __init__(self, batch) -> None:
+        self.batch = batch
+        self.world_data = world_data
+        self.tiles = []
+        self.absolute_pos = (MAX_POSITION_BYTE_VAL/2, MAX_POSITION_BYTE_VAL/2)
+
+    def make_world(self):
+        for y in range(len(self.world_data)):
+            for x in range(len(self.world_data[y])):
+                tile = self.world_data[y][x]
+                if tile == 1:
+                    self.tiles.append(Tile(
+                        x*TILESIZE,
+                        y*TILESIZE,
+                        TILESIZE,
+                        TILESIZE,
+                        (255,255,255,255),
+                        self.batch))
+
+    def update(self, scroll):
+        for tile in self.tiles:
+            tile.rect.x =  int(self.absolute_pos[0] + tile.relative_pos[0] - scroll[0])
+            tile.rect.y =  int(self.absolute_pos[1] + tile.relative_pos[1] - scroll[1])
 
 def update_particles(particles: list, dt):
     for particle in particles:
@@ -147,10 +185,15 @@ class Game(pyglet.window.Window):
         self.network_client = Client(IP, PORT)
         self.network_client.connect()
 
+        self.world_batch = pyglet.graphics.Batch()
         self.player_batch = pyglet.graphics.Batch()
         self.particle_batch = pyglet.graphics.Batch()
 
         self.player = Player(int(MAX_POSITION_BYTE_VAL/2), int(MAX_POSITION_BYTE_VAL/2), batch=self.player_batch)
+        self.world = World(self.world_batch)
+
+        self.world.make_world()
+
         self.players = {}
         self.particles = []
 
@@ -166,6 +209,7 @@ class Game(pyglet.window.Window):
 
     def draw(self, dt):
         self.clear()
+        self.world_batch.draw()
         self.player_batch.draw()
         self.particle_batch.draw()
 
@@ -173,6 +217,8 @@ class Game(pyglet.window.Window):
 
         self.scroll[0] += (self.player.x - self.scroll[0]- (WIDTH/2)) / 14
         self.scroll[1] += (self.player.y - self.scroll[1]- (HEIGHT/2)) / 14
+
+        self.world.update(self.scroll)
 
         self.player.handle_movement(self.keyboard, self.mouse, dt, self.scroll)
         self.network_client.send(
