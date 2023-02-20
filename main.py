@@ -1,4 +1,4 @@
-from particles import Dash_particle
+from particles import Dash_particle, Particle
 from player import Player
 from constants import *
 from world import World
@@ -6,6 +6,12 @@ from network import Client
 import pyglet
 import sys
 from sys import argv
+
+def from_bytes_to_int(numbers):
+    return int.from_bytes(numbers, BYTEORDER)
+
+def position_to_packet(position: tuple[int, int]):
+    return position[0].to_bytes(POSITION_BYTE_LEN , BYTEORDER) + position[1].to_bytes(POSITION_BYTE_LEN , BYTEORDER)
 
 class Game(pyglet.window.Window):
     def __init__(self, *args):
@@ -57,7 +63,7 @@ class Game(pyglet.window.Window):
         )
         self.get_other_players()
 
-        update_particles(self.particles, dt, self.scroll)
+        Particle.update_particles(self.particles, dt, self.scroll)
 
         if self.player._is_dashing:
             self.network_client.send(

@@ -2,18 +2,6 @@ from constants import *
 from random import randint
 import pyglet
 
-def update_particles(particles: list, dt, scroll):
-    for particle in particles:
-        particle.update(dt, scroll)
-        if particle.lifetime == None or particle.lifetime < 0:
-            particles.remove(particle)
-
-
-def from_bytes_to_int(numbers):
-    return int.from_bytes(numbers, BYTEORDER)
-
-def position_to_packet(position: tuple[int, int]):
-    return position[0].to_bytes(POSITION_BYTE_LEN , BYTEORDER) + position[1].to_bytes(POSITION_BYTE_LEN , BYTEORDER)
 
 class Particle:
     def __init__(self, x: int, y: int, lifetime:float | None, batch=None) -> None:
@@ -29,6 +17,14 @@ class Particle:
             self.lifetime -= dt
             if self.lifetime < 0:
                 self.lifetime == None
+
+    @staticmethod
+    def update_particles(particles: list, dt, scroll):
+        for particle in particles:
+            particle.update(dt, scroll)
+            if particle.lifetime == None or particle.lifetime < 0:
+                particles.remove(particle)
+
 
 class Dash_particle(Particle):
     def __init__(self,

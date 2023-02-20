@@ -2,6 +2,7 @@ import pyglet
 from constants import *
 import sys
 
+
 class Player():
     def __init__(self, x: int, y: int, batch=None) -> None:
         self.x = x
