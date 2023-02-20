@@ -62,9 +62,9 @@ class World:
             tile.rect.x =  int(self.absolute_pos[0] + tile.relative_pos[0] - scroll[0])
             tile.rect.y =  int(self.absolute_pos[1] + tile.relative_pos[1] - scroll[1])
 
-def update_particles(particles: list, dt):
+def update_particles(particles: list, dt, scroll):
     for particle in particles:
-        particle.update(dt)
+        particle.update(dt, scroll)
         if particle.lifetime == None or particle.lifetime < 0:
             particles.remove(particle)
 
@@ -80,7 +80,7 @@ class Particle:
         self.x = x
         self.y = y
         self.lifetime = lifetime
-        self.position = self.x, self.y
+        self.absolute_position = self.x, self.y
         self.batch = batch
     
     def update(self, dt):
@@ -99,6 +99,11 @@ class Dash_particle(Particle):
                  batch=None) -> None:
         super().__init__(x, y, lifetime, batch)
         self.rect = pyglet.shapes.Rectangle(x, y, w, h, batch=batch)
+
+    def update(self, dt, scroll):
+        super().update(dt)
+        self.rect.x =  int(self.x - scroll[0])
+        self.rect.y =  int(self.y - scroll[1])
 
 class Player():
     def __init__(self, x: int, y: int, batch=None) -> None:
@@ -228,7 +233,7 @@ class Game(pyglet.window.Window):
         )
         self.get_other_players()
 
-        update_particles(self.particles, dt)
+        update_particles(self.particles, dt, self.scroll)
 
         if self.player._is_dashing:
             self.network_client.send(
@@ -263,7 +268,7 @@ class Game(pyglet.window.Window):
         return self.players
 
     def make_particle(self, x, y, variation = None):
-        self.particles.append(Dash_particle(self.player._rect.x, self.player._rect.y, 5, 5, 2, self.particle_batch))
+        self.particles.append(Dash_particle(self.player.x, self.player.y, 5, 5, 2, self.particle_batch))
 
     def client_events(self, keyboard, mousehandler):
         from pyglet.window import key
