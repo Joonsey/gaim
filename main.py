@@ -3,6 +3,8 @@ import pyglet
 import sys
 from sys import argv
 
+from random import randint
+
 IP = "84.212.18.137"
 PORT = 5555
 FPS = 120
@@ -80,9 +82,10 @@ class Particle:
         self.x = x
         self.y = y
         self.lifetime = lifetime
+        self.max_lifetime = lifetime
         self.absolute_position = self.x, self.y
         self.batch = batch
-    
+
     def update(self, dt):
         if self.lifetime != None:
             self.lifetime -= dt
@@ -96,14 +99,33 @@ class Dash_particle(Particle):
                  w: int,
                  h: int,
                  lifetime: float,
+                 direction: tuple,
                  batch=None) -> None:
         super().__init__(x, y, lifetime, batch)
         self.rect = pyglet.shapes.Rectangle(x, y, w, h, batch=batch)
+        self.direction = direction
+        self.speed = 2
+        self.base_error = 2
+        self.erro_modifier = 5
+
+    def calc_error(self):
+        if self.lifetime != None and self.max_lifetime != None:
+            return randint(-self.base_error, self.base_error) / (self.max_lifetime +1 - self.lifetime)
+        else:
+            return 0
 
     def update(self, dt, scroll):
         super().update(dt)
-        self.rect.x =  int(self.x - scroll[0])
-        self.rect.y =  int(self.y - scroll[1])
+        if self.lifetime != None and self.max_lifetime != None:
+            error = self.calc_error()
+            self.x += self.direction[0] * self.speed + error
+            self.y += self.direction[1] * self.speed + error
+            self.rect.x = int(self.x - scroll[0])
+            self.rect.y = int(self.y - scroll[1])
+
+            self.rect.width = self.rect.width * (self.lifetime / self.max_lifetime)
+            self.rect.height = self.rect.height * (self.lifetime / self.max_lifetime)
+            #print((self.x, self.y), self.direction)
 
 class Player():
     def __init__(self, x: int, y: int, batch=None) -> None:
@@ -219,7 +241,6 @@ class Game(pyglet.window.Window):
         self.particle_batch.draw()
 
     def update(self, dt):
-
         self.scroll[0] += (self.player.x - self.scroll[0]- (WIDTH/2)) / 14
         self.scroll[1] += (self.player.y - self.scroll[1]- (HEIGHT/2)) / 14
 
@@ -240,35 +261,47 @@ class Game(pyglet.window.Window):
                 NETWORK_ORDER["spawn_particle"]
                 + self.network_client.identifier
                 + position_to_packet(self.player.position)
+                + int(self.player.direction[0]).to_bytes(1, BYTEORDER, signed=True)
+                + int(self.player.direction[1]).to_bytes(1, BYTEORDER, signed=True)
             )
 
 
     def get_other_players(self):
-        for entity in self.network_client.responses:
-            entity_type = entity[0]
+        for event in self.network_client.responses:
+            event_type = event[0]
 
 
-            if entity_type == from_bytes_to_int(NETWORK_ORDER["player"]):
-                id = entity[1]
+            if event_type == from_bytes_to_int(NETWORK_ORDER["player"]):
+                id = event[1]
                 if id == int.from_bytes(self.network_client.identifier, "little"):
                     continue
 
-                x = from_bytes_to_int(entity[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
-                y = from_bytes_to_int(entity[2+POSITION_BYTE_LEN:]) - self.scroll[1]
+                x = from_bytes_to_int(event[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
+                y = from_bytes_to_int(event[2+POSITION_BYTE_LEN:]) - self.scroll[1]
 
                 self.players[id] = Player(int(x), int(y), batch=self.player_batch)
 
-            if entity_type == from_bytes_to_int(NETWORK_ORDER['spawn_particle']):
+            if event_type == from_bytes_to_int(NETWORK_ORDER['spawn_particle']):
 
-                x = from_bytes_to_int(entity[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
-                y = from_bytes_to_int(entity[2+POSITION_BYTE_LEN:]) - self.scroll[1]
+                x = from_bytes_to_int(event[2:POSITION_BYTE_LEN+2])# - self.scroll[0]
+                y = from_bytes_to_int(event[2+POSITION_BYTE_LEN:-2])# - self.scroll[1]
+                _direction = event[-2], event[-1]
+                direction = []
+                for d in _direction:
+                    if d == 1: 
+                        v = -1
+                    elif d == 255:
+                        v = 1
+                    else:
+                        v = 0
+                    direction.append(v)
 
-                self.make_particle(x, y)
+                self.make_particle(x, y, direction = tuple(direction))
 
         return self.players
 
-    def make_particle(self, x, y, variation = None):
-        self.particles.append(Dash_particle(self.player.x, self.player.y, 5, 5, 2, self.particle_batch))
+    def make_particle(self, x, y, direction=(0,0), variation = None):
+        self.particles.append(Dash_particle(x, y, 16, 16, 2, direction, self.particle_batch))
 
     def client_events(self, keyboard, mousehandler):
         from pyglet.window import key
