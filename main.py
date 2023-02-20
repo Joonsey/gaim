@@ -28,6 +28,7 @@ class Game(pyglet.window.Window):
         self.player = Player(int(MAX_POSITION_BYTE_VAL/2), int(MAX_POSITION_BYTE_VAL/2), batch=self.player_batch)
         self.world = World(self.world_batch)
 
+        self.world.load_world_data("world.dat")
         self.world.make_world()
 
         self.players = {}
