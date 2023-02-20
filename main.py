@@ -19,13 +19,16 @@ MAX_POSITION_BYTE_VAL = POSITION_BYTE_LEN **16
 
 NETWORK_ORDER = {
     "player" : b"\x01",
-    "particle" : b"\xff",
+    "spawn_particle" : b"\xff",
     "hostile" : b"\x02",
 }
 
-PARTICLE_ORDER = {
-    "dash_particle" : b"\x01",
-}
+
+def update_particles(particles: list, dt):
+    for particle in particles:
+        particle.update(dt)
+        if particle.lifetime == None or particle.lifetime < 0:
+            particles.remove(particle)
 
 
 def from_bytes_to_int(numbers):
@@ -35,11 +38,18 @@ def position_to_packet(position: tuple[int, int]):
     return position[0].to_bytes(POSITION_BYTE_LEN , BYTEORDER) + position[1].to_bytes(POSITION_BYTE_LEN , BYTEORDER)
 
 class Particle:
-    def __init__(self, x: int, y: int, batch=None) -> None:
+    def __init__(self, x: int, y: int, lifetime:float | None, batch=None) -> None:
         self.x = x
         self.y = y
+        self.lifetime = lifetime
         self.position = self.x, self.y
         self.batch = batch
+    
+    def update(self, dt):
+        if self.lifetime != None:
+            self.lifetime -= dt
+            if self.lifetime < 0:
+                self.lifetime == None
 
 class Dash_particle(Particle):
     def __init__(self,
@@ -47,8 +57,9 @@ class Dash_particle(Particle):
                  y: int,
                  w: int,
                  h: int,
+                 lifetime: float,
                  batch=None) -> None:
-        super().__init__(x, y, batch)
+        super().__init__(x, y, lifetime, batch)
         self.rect = pyglet.shapes.Rectangle(x, y, w, h, batch=batch)
 
 class Player():
@@ -171,9 +182,21 @@ class Game(pyglet.window.Window):
         )
         self.get_other_players()
 
+        update_particles(self.particles, dt)
+
+        if self.player._is_dashing:
+            self.network_client.send(
+                NETWORK_ORDER["spawn_particle"]
+                + self.network_client.identifier
+                + position_to_packet(self.player.position)
+            )
+
+
     def get_other_players(self):
         for entity in self.network_client.responses:
             entity_type = entity[0]
+
+
             if entity_type == from_bytes_to_int(NETWORK_ORDER["player"]):
                 id = entity[1]
                 if id == int.from_bytes(self.network_client.identifier, "little"):
@@ -184,19 +207,24 @@ class Game(pyglet.window.Window):
 
                 self.players[id] = Player(int(x), int(y), batch=self.player_batch)
 
-            if entity_type == from_bytes_to_int(NETWORK_ORDER["particle"]):
+            if entity_type == from_bytes_to_int(NETWORK_ORDER['spawn_particle']):
+
                 x = from_bytes_to_int(entity[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
                 y = from_bytes_to_int(entity[2+POSITION_BYTE_LEN:]) - self.scroll[1]
 
-                self.particles.append(Dash_particle(int(x), int(y), 3,3, batch=self.particle_batch))
+                self.make_particle(x, y)
 
         return self.players
+
+    def make_particle(self, x, y, variation = None):
+        self.particles.append(Dash_particle(self.player._rect.x, self.player._rect.y, 5, 5, 2, self.particle_batch))
 
     def client_events(self, keyboard, mousehandler):
         from pyglet.window import key
 
         if keyboard[key.Q]:
             sys.exit()
+
 
 if __name__ == "__main__":
     args = len(argv) > 1
