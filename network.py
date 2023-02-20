@@ -45,7 +45,7 @@ class Client:
     @run_in_thread
     def send(self, data):
         try:
-            self.client.sendto(self.identifier + data + PACKET_SUFFIX, self.addr)
+            self.client.sendto(data + PACKET_SUFFIX, self.addr)
             response = self.client.recv(PACKET_SIZE)
             self.responses = response.split(b" _ ")
             self.responses.pop() # removes trailing element after split
@@ -77,19 +77,18 @@ class Server:
         self.sock.bind(self.addr)
 
     def handle_data(self, data: bytes) -> bytes:
-        identification = data[0]
         if data == b'\x00':
             identification = IOTA()
             return identification
         else:
-            self.all_players[identification] = data[1:]
-            return self.format_all_players()
+            identification = data[1]
+            self.all_players[identification] = data
+            return self.format_all_entities()
 
-    def format_all_players(self) -> bytes:
+    def format_all_entities(self) -> bytes:
         players = self.all_players
         response = b''
         for id in players.keys():
-            response += id.to_bytes(1, 'little')
             response += players[id]
         return response
 

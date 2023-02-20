@@ -1,6 +1,8 @@
+from pickle import NEWOBJ
 from network import Client
 import pyglet
 import sys
+from sys import argv
 
 IP = "84.212.18.137"
 PORT = 5555
@@ -15,8 +17,39 @@ BYTEORDER = "little"
 POSITION_BYTE_LEN = 4
 MAX_POSITION_BYTE_VAL = POSITION_BYTE_LEN **16
 
+NETWORK_ORDER = {
+    "player" : b"\x01",
+    "particle" : b"\xff",
+    "hostile" : b"\x02",
+}
+
+PARTICLE_ORDER = {
+    "dash_particle" : b"\x01",
+}
+
+
+def from_bytes_to_int(numbers):
+    return int.from_bytes(numbers, BYTEORDER)
+
 def position_to_packet(position: tuple[int, int]):
     return position[0].to_bytes(POSITION_BYTE_LEN , BYTEORDER) + position[1].to_bytes(POSITION_BYTE_LEN , BYTEORDER)
+
+class Particle:
+    def __init__(self, x: int, y: int, batch=None) -> None:
+        self.x = x
+        self.y = y
+        self.position = self.x, self.y
+        self.batch = batch
+
+class Dash_particle(Particle):
+    def __init__(self,
+                 x: int,
+                 y: int,
+                 w: int,
+                 h: int,
+                 batch=None) -> None:
+        super().__init__(x, y, batch)
+        self.rect = pyglet.shapes.Rectangle(x, y, w, h, batch=batch)
 
 class Player():
     def __init__(self, x: int, y: int, batch=None) -> None:
@@ -43,6 +76,7 @@ class Player():
             return self._max_dash_duration
         x = self.x + speed * direction[0] * t
         y = self.y + speed * direction[1] * t
+
         self._update_pos(x, y, scroll)
         return total_t-t if total_t-t > 0 else self._max_dash_duration
 
@@ -103,9 +137,11 @@ class Game(pyglet.window.Window):
         self.network_client.connect()
 
         self.player_batch = pyglet.graphics.Batch()
+        self.particle_batch = pyglet.graphics.Batch()
 
         self.player = Player(int(MAX_POSITION_BYTE_VAL/2), int(MAX_POSITION_BYTE_VAL/2), batch=self.player_batch)
         self.players = {}
+        self.particles = []
 
         self.keyboard = pyglet.window.key.KeyStateHandler()
         self.mouse = pyglet.window.mouse.MouseStateHandler()
@@ -120,6 +156,7 @@ class Game(pyglet.window.Window):
     def draw(self, dt):
         self.clear()
         self.player_batch.draw()
+        self.particle_batch.draw()
 
     def update(self, dt):
 
@@ -127,21 +164,32 @@ class Game(pyglet.window.Window):
         self.scroll[1] += (self.player.y - self.scroll[1]- (HEIGHT/2)) / 14
 
         self.player.handle_movement(self.keyboard, self.mouse, dt, self.scroll)
-        self.network_client.send(position_to_packet(self.player.position))
+        self.network_client.send(
+            NETWORK_ORDER["player"]
+            + self.network_client.identifier
+            + position_to_packet(self.player.position)
+        )
         self.get_other_players()
 
     def get_other_players(self):
-        peepos = self.network_client.responses
-        for peepo in peepos:
-            id = peepo[0]
-            if id == int.from_bytes(self.network_client.identifier, "little"):
-                continue
-            x = int.from_bytes(peepo[1:POSITION_BYTE_LEN+1], "little") - self.scroll[0]
-            y = int.from_bytes(peepo[POSITION_BYTE_LEN+1:], "little") - self.scroll[1]
+        for entity in self.network_client.responses:
+            entity_type = entity[0]
+            if entity_type == from_bytes_to_int(NETWORK_ORDER["player"]):
+                id = entity[1]
+                if id == int.from_bytes(self.network_client.identifier, "little"):
+                    continue
 
-            #print("abs x: ", int.from_bytes(peepo[1:POSITION_BYTE_LEN+1], "little"))
-            #print("x, y:", x, y)
-            self.players[id] = Player(int(x), int(y), batch=self.player_batch)
+                x = from_bytes_to_int(entity[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
+                y = from_bytes_to_int(entity[2+POSITION_BYTE_LEN:]) - self.scroll[1]
+
+                self.players[id] = Player(int(x), int(y), batch=self.player_batch)
+
+            if entity_type == from_bytes_to_int(NETWORK_ORDER["particle"]):
+                x = from_bytes_to_int(entity[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
+                y = from_bytes_to_int(entity[2+POSITION_BYTE_LEN:]) - self.scroll[1]
+
+                self.particles.append(Dash_particle(int(x), int(y), 3,3, batch=self.particle_batch))
+
         return self.players
 
     def client_events(self, keyboard, mousehandler):
@@ -151,6 +199,10 @@ class Game(pyglet.window.Window):
             sys.exit()
 
 if __name__ == "__main__":
+    args = len(argv) > 1
+    if args:
+        if argv[1] == '-l':
+            IP = "localhost"
     game = Game(WIDTH, HEIGHT)
     pyglet.app.run()
 
