@@ -57,12 +57,8 @@ class Game(pyglet.window.Window):
         self.world.update(self.scroll)
 
         self.player.handle_movement(self.keyboard, self.mouse, dt, self.scroll)
-        self.network_client.send(
-            NETWORK_ORDER["player"]
-            + self.network_client.identifier
-            + position_to_packet(self.player.position)
-        )
-        self.get_other_players()
+        self.network_client.query_positions(self.player.position)
+        self.add_players_from_positions(self.network_client.positions)
 
         Particle.update_particles(self.particles, dt, self.scroll)
 
@@ -75,40 +71,14 @@ class Game(pyglet.window.Window):
                 + int(self.player.direction[1]).to_bytes(1, BYTEORDER, signed=True)
             )
 
-
-    def get_other_players(self):
-        for event in self.network_client.responses:
-            event_type = event[0]
-
-
-            if event_type == from_bytes_to_int(NETWORK_ORDER["player"]):
-                id = event[1]
-                if id == int.from_bytes(self.network_client.identifier, "little"):
-                    continue
-
-                x = from_bytes_to_int(event[2:POSITION_BYTE_LEN+2]) - self.scroll[0]
-                y = from_bytes_to_int(event[2+POSITION_BYTE_LEN:]) - self.scroll[1]
-
-                self.players[id] = Player(int(x), int(y), batch=self.player_batch)
-
-            if event_type == from_bytes_to_int(NETWORK_ORDER['spawn_particle']):
-
-                x = from_bytes_to_int(event[2:POSITION_BYTE_LEN+2])# - self.scroll[0]
-                y = from_bytes_to_int(event[2+POSITION_BYTE_LEN:-2])# - self.scroll[1]
-                _direction = event[-2], event[-1]
-                direction = []
-                for d in _direction:
-                    if d == 1: 
-                        v = -1
-                    elif d == 255:
-                        v = 1
-                    else:
-                        v = 0
-                    direction.append(v)
-
-                self.make_particle(x, y, direction = tuple(direction))
+    def add_players_from_positions(self, positions):
+        for id, position in positions.items():
+            x = int(position[0] - self.scroll[0])
+            y = int(position[1] - self.scroll[1])
+            self.players[id] = Player(x, y, batch=self.player_batch)
 
         return self.players
+
 
     def make_particle(self, x, y, direction=(0,0), variation = None):
         self.particles.append(Dash_particle(x, y, 16, 16, 2, direction, self.particle_batch))

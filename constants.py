@@ -11,6 +11,13 @@ BYTEORDER = "little"
 POSITION_BYTE_LEN = 4
 MAX_POSITION_BYTE_VAL = POSITION_BYTE_LEN **16
 
+HANDLER_CODES = {
+    "new_connection" : 0,
+    "player_movement" : 1,
+    "projectile_generated" : 2,
+    "player_animation_event" : 3,
+}
+
 NETWORK_ORDER = {
     "player" : b"\x01",
     "spawn_particle" : b"\xff",
