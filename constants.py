@@ -16,6 +16,7 @@ HANDLER_CODES = {
     "player_movement" : 1,
     "projectile_generated" : 2,
     "player_animation_event" : 3,
+    "player_names" : 4,
 }
 
 NETWORK_ORDER = {

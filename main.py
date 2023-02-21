@@ -21,6 +21,8 @@ class Game(pyglet.window.Window):
         self.network_client = Client(IP, PORT)
         self.network_client.connect()
 
+        self.delta_player_count = 0
+
         self.world_batch = pyglet.graphics.Batch()
         self.player_batch = pyglet.graphics.Batch()
         self.particle_batch = pyglet.graphics.Batch()
@@ -40,6 +42,7 @@ class Game(pyglet.window.Window):
         self.push_handlers(self.keyboard)
 
         self.client_events(self.keyboard, self.mouse)
+        self.network_client.query_names()
 
         pyglet.clock.schedule_interval(self.draw, 1/FPS)
         pyglet.clock.schedule_interval(self.update, 1/FPS)
@@ -59,6 +62,11 @@ class Game(pyglet.window.Window):
         self.player.handle_movement(self.keyboard, self.mouse, dt, self.scroll)
         self.network_client.query_positions(self.player.position)
         self.add_players_from_positions(self.network_client.positions)
+
+
+        if len(self.network_client.positions) != self.delta_player_count:
+            self.delta_player_count = len(self.network_client.positions)
+            self.network_client.query_names()
 
         Particle.update_particles(self.particles, dt, self.scroll)
 
@@ -80,7 +88,6 @@ class Game(pyglet.window.Window):
             self.players[id] = Player(x, y, batch=self.player_batch)
 
         return self.players
-
 
     def make_particle(self, x, y, direction=(0,0), variation = None):
         self.particles.append(Dash_particle(x, y, 16, 16, 2, direction, self.particle_batch))

@@ -33,16 +33,28 @@ class Client:
         self.identifier = b"\x00"
         self.positions = {}
         self.responses = []
+        self.player_names = {}
 
-    def connect(self):
+    def connect(self, name = "player"):
         try:
-            self.client.sendto(self.identifier, self.addr)
+            self.client.sendto(
+                handler_code_as_byte("new_connection") +
+                name.encode(),
+                self.addr)
             response = self.client.recv(PACKET_SIZE)
             self.identifier = response
             return response
         except Exception as e:
             print("error caught in 'connect': \n", e)
             return False
+
+    @run_in_thread
+    def query_names(self):
+        self.client.sendto(HANDLER_CODES["player_names"].to_bytes(1,BYTEORDER), self.addr)
+        response = self.client.recv(PACKET_SIZE)
+        for player in response.split(b" _ "):
+            id = player[0]
+            self.player_names[id] = player[1:]
 
     @run_in_thread
     def query_positions(self, position):
@@ -90,7 +102,8 @@ class Server:
         self.ip = ip
         self.port = port
         self.addr = (self.ip, self.port)
-        self.all_players = {}
+        self.player_positions = {}
+        self.player_names = {}
         self.addresses = []
         self.handlers = {}
 
@@ -98,12 +111,21 @@ class Server:
         self.sock.bind(self.addr)
 
     def new_connection(self, payload, address):
-        self.sock.sendto(IOTA(), address)
+        id = IOTA()
+        self.player_names[id] = payload
+        self.sock.sendto(id, address)
+
+    def player_names(self, payload, address):
+        names = []
+        for key in self.player_names.keys():
+            name = self.player_names[key]
+            names.append(key + name)
+        self.sock.sendto(b" _ ".join(names), address)
 
     def player_movement(self, payload, address):
-        self.all_players[payload[0]] = payload[1:]
+        self.player_positions[payload[0]] = payload[1:]
 
-        all_player_positions = [id.to_bytes(1, BYTEORDER) + self.all_players[id] for id in self.all_players.keys()]
+        all_player_positions = [id.to_bytes(1, BYTEORDER) + self.player_positions[id] for id in self.player_positions.keys()]
         all_player_bytestring = b" _ ".join(all_player_positions)
         self.sock.sendto(all_player_bytestring, address)
 
@@ -119,14 +141,6 @@ class Server:
         self.addresses.append(address)
         print(f"new connection from {address}!")
 
-    def format_all_entities(self) -> bytes:
-        players = self.all_players
-        response = b''
-        for id in players.keys():
-            response += players[id]
-        return response
-
-
     def run(self):
         print("server is listening...\n")
 
@@ -135,6 +149,7 @@ class Server:
             HANDLER_CODES["player_movement"] : Server.player_movement,
             HANDLER_CODES["projectile_generated"] : Server.projectile_generated,
             HANDLER_CODES["player_animation_event"] : Server.player_animation_event,
+            HANDLER_CODES["player_names"] : Server.player_names
         }
         while True:
             try:
