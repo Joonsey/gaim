@@ -73,6 +73,8 @@ class Game(pyglet.window.Window):
 
     def add_players_from_positions(self, positions):
         for id, position in positions.items():
+            if id == from_bytes_to_int(self.network_client.identifier):
+                continue
             x = int(position[0] - self.scroll[0])
             y = int(position[1] - self.scroll[1])
             self.players[id] = Player(x, y, batch=self.player_batch)
