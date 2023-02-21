@@ -85,7 +85,9 @@ class Game(pyglet.window.Window):
                 continue
             x = int(position[0] - self.scroll[0])
             y = int(position[1] - self.scroll[1])
-            self.players[id] = Player(x, y, batch=self.player_batch)
+            player = Player(x, y, batch=self.player_batch)
+            player.name_text.text = self.network_client.player_names[id].decode()
+            self.players[id] = player
 
         return self.players
 

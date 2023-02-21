@@ -10,6 +10,7 @@ class Player():
         self.batch = batch
         self.position = self.x, self.y
         self._rect = pyglet.shapes.Rectangle(self.x, self.y, 25, 25, color=(255, 255, 0), batch=self.batch)
+        self.name_text = pyglet.text.Label(x = x, y = y+25, align="center", batch=self.batch)
         self.direction = [0,0]
         self.dash_cooldown = 2
         self.dash_duration = .2
@@ -22,6 +23,8 @@ class Player():
         self.position = int(self.x), int(self.y)
         self._rect.x = x - scroll[0]
         self._rect.y = y - scroll[1]
+        self.name_text.x = x - scroll[0]
+        self.name_text.y = y - scroll[1] - 25
 
     def dash(self, speed: int, direction: list|tuple[float | int, float | int], t :float, scroll: tuple, total_t: float|int = 1) -> float:
         if total_t <= 0:
