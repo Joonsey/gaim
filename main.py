@@ -60,33 +60,30 @@ class Game(pyglet.window.Window):
         self.world.update(self.scroll)
 
         self.player.handle_movement(self.keyboard, self.mouse, dt, self.scroll)
+
+
         self.network_client.query_positions(self.player.position)
-        self.add_players_from_positions(self.network_client.positions)
-
-
         if len(self.network_client.positions) != self.delta_player_count:
             self.delta_player_count = len(self.network_client.positions)
             self.network_client.query_names()
 
+        self.add_players_from_positions(self.network_client.positions.copy())
+
         Particle.update_particles(self.particles, dt, self.scroll)
 
-        if self.player._is_dashing:
-            self.network_client.send(
-                NETWORK_ORDER["spawn_particle"]
-                + self.network_client.identifier
-                + position_to_packet(self.player.position)
-                + int(self.player.direction[0]).to_bytes(1, BYTEORDER, signed=True)
-                + int(self.player.direction[1]).to_bytes(1, BYTEORDER, signed=True)
-            )
-
     def add_players_from_positions(self, positions):
-        for id, position in positions.items():
+        for id in positions.keys():
+            position = positions[id]
             if id == from_bytes_to_int(self.network_client.identifier):
                 continue
             x = int(position[0] - self.scroll[0])
             y = int(position[1] - self.scroll[1])
             player = Player(x, y, batch=self.player_batch)
-            player.name_text.text = self.network_client.player_names[id].decode()
+            try:
+                # look for name for the player
+                player.name_text.text = self.network_client.player_names[id].decode()
+            except:
+                pass
             self.players[id] = player
 
         return self.players
@@ -106,6 +103,7 @@ if __name__ == "__main__":
     if args:
         if argv[1] == '-l':
             IP = "localhost"
+
     game = Game(WIDTH, HEIGHT)
     pyglet.app.run()
 

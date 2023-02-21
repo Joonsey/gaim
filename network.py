@@ -52,7 +52,11 @@ class Client:
     def query_names(self):
         self.client.sendto(HANDLER_CODES["player_names"].to_bytes(1,BYTEORDER), self.addr)
         response = self.client.recv(PACKET_SIZE)
-        for player in response.split(b" _ "):
+        if response[0] != HANDLER_CODES["player_names"]:
+            return
+
+        names = response[1:]
+        for player in names.split(b" _ "):
             id = player[0]
             self.player_names[id] = player[1:]
 
@@ -120,7 +124,10 @@ class Server:
         for key in self.player_names.keys():
             name = self.player_names[key]
             names.append(key + name)
-        self.sock.sendto(b" _ ".join(names), address)
+        self.sock.sendto(
+            handler_code_as_byte("player_names")
+            + (b" _ ".join(names)),
+            address)
 
     def player_movement(self, payload, address):
         self.player_positions[payload[0]] = payload[1:]
