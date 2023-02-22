@@ -1,5 +1,5 @@
 import pygame
-
+import json
 import os
 
 TILE_SIZE = 32
@@ -36,6 +36,21 @@ class Section:
         for i, sprite in enumerate(self.sprites):
             self.surf.blit(sprite, (0,i*TILE_SIZE))
 
+    @staticmethod
+    def parse_from_json(path: str = "config.json"):
+        sections = []
+        with open(path, "r") as f:
+            config = json.load(f)
+
+        for s in config["sections"]:
+            rel_dim = s["relative_dimension"]
+            eval_string = f'{s["type"]}((WIDTH*{rel_dim[0]},HEIGHT*{rel_dim[1]}), {s["color"]})'
+            sec = eval(eval_string)
+            sections.append(sec)
+        return sections
+
+
+
 class Tilepicker(Section):
     def __init__(self, dimensions, color) -> None:
         super().__init__(dimensions, color)
@@ -59,19 +74,17 @@ class Grid(Section):
             pygame.draw.line(self.surf, (222,222,222,120), (0, row*TILE_SIZE), (WIDTH, row*TILE_SIZE))
 
 class Editor:
-    def __init__(self, width, height) -> None:
+    def __init__(self, width, height, sections=[]) -> None:
         self.surface = pygame.display.set_mode((width, height))
-        self.grid = Grid((width, height), (5,5,5))
-        self.tilepicker = Tilepicker((width/5, height), (22,21,23))
+        self.sections = sections
         self.running = False
 
     def run(self):
         self.running = True
         while self.running:
-            self.grid.draw()
-            self.tilepicker.draw()
-            self.surface.blit(self.grid.surf, (0,0))
-            self.surface.blit(self.tilepicker.surf, (0,0))
+            for section in self.sections:
+                section.draw()
+                self.surface.blit(section.surf, (0,0))
 
             pygame.display.update()
 
@@ -81,5 +94,6 @@ class Editor:
                     pygame.quit()
 
 if __name__ == "__main__":
-    editor = Editor(WIDTH, HEIGHT)
+    sections = Section.parse_from_json()
+    editor = Editor(WIDTH, HEIGHT, sections)
     editor.run()
