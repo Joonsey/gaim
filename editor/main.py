@@ -11,7 +11,7 @@ class Tile:
         self.active = False
 
 class Editor:
-    def __init__(self, width, height, sections: list[Section] =[]) -> None:
+    def __init__(self, width, height, sections = []) -> None:
         self.surface = pygame.display.set_mode((width, height))
         self.sections = sections
         self.running = False
@@ -29,6 +29,17 @@ class Editor:
                 if event.type == pygame.QUIT:
                     self.running = False
                     pygame.quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_g:
+                        for sec in self.sections:
+                            if type(sec) == Grid:
+                                sec.toggle_grid()
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_q]:
+                self.running = False
+                pygame.quit()
+
 
     @staticmethod
     def parse_from_json(path: str = "config.json") -> list[Section]:

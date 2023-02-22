@@ -22,6 +22,7 @@ class Section:
             print(f"asset path invalid: '{path}'")
 
     def draw(self):
+        self.surf.fill(self.color)
         for i, sprite in enumerate(self.sprites):
             self.surf.blit(sprite, (0,i*TILE_SIZE))
 
