@@ -1,15 +1,21 @@
 import pygame
-import os
 import json
-import pygame
 from util.constants import *
 
 class Section:
-    def __init__(self, dimensions, color) -> None:
+    def __init__(self, dimensions, color, **kwargs) -> None:
+        try:
+            self.sprite_data = kwargs["sprite_data"]
+        except:
+            self.sprite_data = SpriteData()
         self.surf = pygame.surface.Surface(dimensions)
         self.color = color
         self.surf.fill(self.color)
+        self.has_mouse_event = False
 
     def draw(self):
         self.surf.fill(self.color)
+
+    def handle_mouse_event(self, mouse, cursor):
+        raise NotImplementedError
 
