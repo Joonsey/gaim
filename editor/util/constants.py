@@ -2,6 +2,12 @@ import os
 import pygame
 from PIL import Image
 
+TILE_SIZE = 32
+MAX_ROWS = 150
+MAX_COLUMNS = 150
+
+WIDTH = 1080
+HEIGHT = 720
 
 class SpriteData:
     def __init__(self) -> None:
@@ -38,10 +44,7 @@ class SpriteData:
             print(e)
 
 
+if __name__ == "__main__":
+    SpriteData.split_sheets("red-bush.png")
 
-TILE_SIZE = 32
-MAX_ROWS = 150
-MAX_COLUMNS = 150
 
-WIDTH = 1080
-HEIGHT = 720

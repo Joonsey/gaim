@@ -18,7 +18,7 @@ class Editor:
         while self.running:
             for section in self.sections:
                 section.draw()
-                self.surface.blit(section.surf, (0,0))
+                self.surface.blit(section.surf, section.offset)
 
             pygame.display.update()
 
@@ -59,8 +59,13 @@ class Editor:
             config = json.load(f)
 
         for s in config["sections"]:
+            offset = [0,0]
+            if "offset" in s.keys():
+                offset = s["offset"]
+            offset[0] *= WIDTH
+            offset[1] *= HEIGHT
             rel_dim = s["relative_dimension"]
-            eval_string = f'{s["type"]}((WIDTH*{rel_dim[0]},HEIGHT*{rel_dim[1]}), {s["color"]}, sprite_data=sprite_data)'
+            eval_string = f'{s["type"]}((WIDTH*{rel_dim[0]},HEIGHT*{rel_dim[1]}), {s["color"]}, offset={offset}, sprite_data=sprite_data)'
             sec = eval(eval_string)
             sections.append(sec)
         return sections

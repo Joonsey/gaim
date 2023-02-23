@@ -44,9 +44,17 @@ class Grid(Section):
         self.background = surface
 
     def handle_mouse_event(self, mouse, cursor):
-        if self.surf.get_bounding_rect().collidepoint(cursor):
+        rect = self.surf.get_bounding_rect()
+        if self.has_offset:
+            rect.left += self.offset[0]
+            rect.top += self.offset[1]
+        if rect.collidepoint(cursor):
             x = (cursor[0] + self.scroll[0]) // TILE_SIZE
             y = (cursor[1] + self.scroll[1]) // TILE_SIZE
+
+            if self.has_offset:
+                x = int((cursor[0] + self.scroll[0] - self.offset[0]) // TILE_SIZE)
+                y = int((cursor[1] + self.scroll[1] - self.offset[1]) // TILE_SIZE)
 
             if self.sprite_data.active and self.world_data[y][x] == 0:
                 self.show_ghost = True
