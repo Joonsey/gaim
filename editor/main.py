@@ -42,6 +42,9 @@ class Editor:
             if keys[pygame.K_q]:
                 self.running = False
 
+            if keys[pygame.K_d]:
+                self.sprite_data.active = 0
+
             mouse = pygame.mouse.get_pressed()
             cursor = pygame.mouse.get_pos()
 

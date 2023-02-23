@@ -8,6 +8,8 @@ class Grid(Section):
         self.world_data = [[0 for x in range(MAX_ROWS)] for y in range(MAX_COLUMNS)]
         self.active_tile = None
         self.has_mouse_event = True
+        self.ghost_position = (-1, -1)
+        self.show_ghost = False
 
     def save_world(self, path: str= "level.json"):
         try:
@@ -23,6 +25,11 @@ class Grid(Section):
         except:
             print("unable to load world data")
 
+    def draw_ghost_tile(self, tile, position, opacity=128):
+        ghost = tile.copy()
+        ghost.set_alpha(opacity)
+        self.surf.blit(ghost, position)
+
     def set_active_tile(self, tile):
         assert type(tile) == int
         self.sprite_data.active = tile
@@ -34,16 +41,22 @@ class Grid(Section):
         self.background = surface
 
     def handle_mouse_event(self, mouse, cursor):
-        if mouse[0] and self.surf.get_bounding_rect().collidepoint(cursor):
-            if self.sprite_data.active:
-                x = cursor[0] // TILE_SIZE
-                y = cursor[1] // TILE_SIZE
-                self.world_data[y][x] = self.sprite_data.active
+        if self.surf.get_bounding_rect().collidepoint(cursor):
+            x = cursor[0] // TILE_SIZE
+            y = cursor[1] // TILE_SIZE
 
-        if mouse[2] and self.surf.get_bounding_rect().collidepoint(cursor):
-                x = cursor[0] // TILE_SIZE
-                y = cursor[1] // TILE_SIZE
-                self.world_data[y][x] = 0
+            if self.sprite_data.active and self.world_data[y][x] == 0:
+                self.show_ghost = True
+                self.ghost_position = (x,y)
+            else:
+                self.show_ghost = False
+
+            if mouse[0]:
+                if self.sprite_data.active:
+                    self.world_data[y][x] = self.sprite_data.active
+
+            if mouse[2]:
+                    self.world_data[y][x] = 0
 
 
     def draw(self):
@@ -55,6 +68,9 @@ class Grid(Section):
             for x, tile in enumerate(self.world_data[y]):
                 if tile > 0:
                     self.surf.blit(self.sprite_data.sprites[tile-1], (x*TILE_SIZE, y*TILE_SIZE))
+
+                if (x,y) == self.ghost_position and self.show_ghost:
+                    self.draw_ghost_tile(self.sprite_data.sprites[self.sprite_data.active-1], (x*TILE_SIZE,y*TILE_SIZE))
 
         if self.show_grid:
             for col in range(MAX_COLUMNS):

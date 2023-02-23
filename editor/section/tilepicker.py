@@ -4,7 +4,6 @@ class Tilepicker(Section):
     def __init__(self, dimensions, color, **kwargs) -> None:
         super().__init__(dimensions, color, **kwargs)
         self.has_mouse_event = True
-        self.active_sprite = None
         self.buttons = {}
 
     def highlight_outline(self, img, position, width=1):
