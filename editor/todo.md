@@ -7,6 +7,7 @@
 
 
 # DONE
+- highlights the tile currently selected
 - save and load data.
 - place and remove tiles.
 - add config file for configurations
