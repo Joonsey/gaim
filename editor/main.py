@@ -68,4 +68,5 @@ class Editor:
 if __name__ == "__main__":
     sections = Editor.parse_from_json()
     editor = Editor(WIDTH, HEIGHT, sections)
+    #sprite_data.split_sheets("green-bush.png")
     editor.run()

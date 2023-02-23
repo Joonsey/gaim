@@ -1,5 +1,7 @@
 import os
 import pygame
+from PIL import Image
+
 
 class SpriteData:
     def __init__(self) -> None:
@@ -17,6 +19,24 @@ class SpriteData:
                 self.sprites.append(tile)
         except FileNotFoundError:
             print(f"asset path invalid: '{path}'")
+
+    @staticmethod
+    def split_sheets(file_name, assets_path: str = "assets/sheets/") -> None:
+        """
+        only splits horizontaly for now
+        """
+        file, ext = os.path.splitext(assets_path+file_name)
+        try:
+            with Image.open(assets_path+file_name) as im:
+                columns = im.width // TILE_SIZE
+                for index in range(columns):
+                    offset = index*TILE_SIZE
+                    cropped_image_name = f"assets/imgs/{file_name}-{index}{ext}"
+                    im.crop((offset, 0, offset + TILE_SIZE, im.height)).save(cropped_image_name, 'png')
+        except Exception as e:
+            print("Error loading spritesheet at: ", assets_path+file_name)
+            print(e)
+
 
 
 TILE_SIZE = 32
