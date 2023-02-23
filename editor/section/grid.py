@@ -10,6 +10,9 @@ class Grid(Section):
         self.has_mouse_event = True
         self.ghost_position = (-1, -1)
         self.show_ghost = False
+        self.is_scrolling = True
+        self.scroll = [0,(MAX_COLUMNS * TILE_SIZE) - HEIGHT]
+        self.prev_mouse_position = [0,0]
 
     def save_world(self, path: str= "level.json"):
         try:
@@ -42,8 +45,8 @@ class Grid(Section):
 
     def handle_mouse_event(self, mouse, cursor):
         if self.surf.get_bounding_rect().collidepoint(cursor):
-            x = cursor[0] // TILE_SIZE
-            y = cursor[1] // TILE_SIZE
+            x = (cursor[0] + self.scroll[0]) // TILE_SIZE
+            y = (cursor[1] + self.scroll[1]) // TILE_SIZE
 
             if self.sprite_data.active and self.world_data[y][x] == 0:
                 self.show_ghost = True
@@ -51,9 +54,30 @@ class Grid(Section):
             else:
                 self.show_ghost = False
 
+            if self.is_scrolling and mouse[0]:
+                self.scroll[0] += self.prev_mouse_position[0] - cursor[0]
+                self.scroll[1] += self.prev_mouse_position[1] - cursor[1]
+                if self.scroll[0] < 0:
+                    self.scroll[0] = 0
+                if self.scroll[1] < 0:
+                    self.scroll[1] = 0
+                if self.scroll[0] > MAX_ROWS * TILE_SIZE:
+                    self.scroll[0] = MAX_ROWS * TILE_SIZE
+                if self.scroll[1] > (MAX_COLUMNS * TILE_SIZE) - HEIGHT:
+                    self.scroll[1] = (MAX_COLUMNS * TILE_SIZE) - HEIGHT
+
+            self.prev_mouse_position = cursor
+
             if mouse[0]:
-                if self.sprite_data.active:
-                    self.world_data[y][x] = self.sprite_data.active
+                try:
+                    if self.sprite_data.active:
+                        self.world_data[y][x] = self.sprite_data.active
+                        self.is_scrolling = False
+                    else:
+                        self.is_scrolling = True
+                except:
+                    #out of bounds
+                    pass
 
             if mouse[2]:
                     self.world_data[y][x] = 0
@@ -66,15 +90,20 @@ class Grid(Section):
 
         for y in range(len(self.world_data)):
             for x, tile in enumerate(self.world_data[y]):
+                x_position = x*TILE_SIZE - self.scroll[0]
+                y_position = y*TILE_SIZE - self.scroll[1]
+                position = (x_position, y_position)
                 if tile > 0:
-                    self.surf.blit(self.sprite_data.sprites[tile-1], (x*TILE_SIZE, y*TILE_SIZE))
+                    self.surf.blit(self.sprite_data.sprites[tile-1], position)
 
                 if (x,y) == self.ghost_position and self.show_ghost:
-                    self.draw_ghost_tile(self.sprite_data.sprites[self.sprite_data.active-1], (x*TILE_SIZE,y*TILE_SIZE))
+                    self.draw_ghost_tile(self.sprite_data.sprites[self.sprite_data.active-1], position)
 
         if self.show_grid:
             for col in range(MAX_COLUMNS):
-                pygame.draw.line(self.surf, (222,222,222,120), (col*TILE_SIZE,0), (col*TILE_SIZE, HEIGHT))
+                x_position = col*TILE_SIZE - self.scroll[0]
+                pygame.draw.line(self.surf, (222,222,222,120), (x_position, 0), (x_position, HEIGHT))
 
             for row in range(MAX_ROWS):
-                pygame.draw.line(self.surf, (222,222,222,120), (0, row*TILE_SIZE), (WIDTH, row*TILE_SIZE))
+                y_position = row*TILE_SIZE - self.scroll[1]
+                pygame.draw.line(self.surf, (222,222,222,120), (0, y_position), (WIDTH, y_position))
