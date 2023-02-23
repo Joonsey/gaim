@@ -1,17 +1,10 @@
 import pygame
 import json
-import os
 from util.constants import *
 from section import *
 
 pygame.init()
 sprite_data = SpriteData()
-
-#TODO not yet in use
-class Tile:
-    def __init__(self, surf) -> None:
-        self.surf = surf
-        self.active = False
 
 class Editor:
     def __init__(self, width, height, sections = []) -> None:
@@ -19,7 +12,6 @@ class Editor:
         self.sprite_data = sprite_data
         self.sections = sections
         self.running = False
-        self.active_tile = None
 
     def run(self):
         self.running = True
