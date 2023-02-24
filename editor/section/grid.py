@@ -5,7 +5,7 @@ class Grid(Section):
     def __init__(self, dimensions, color, **kwargs) -> None:
         super().__init__(dimensions, color, **kwargs)
         self.background = None
-        self.show_grid = True
+        self.show_grid = False
         self.world_data = [[-1 for _ in range(MAX_ROWS)] for __ in range(MAX_COLUMNS)]
         self.active_tile = None
         self.has_mouse_event = True
@@ -62,7 +62,7 @@ class Grid(Section):
 
             self.grid_cursor_position = (x,y)
 
-            if self.sprite_data.active and self.world_data[y][x] == -1:
+            if self.sprite_data.active >= 0 and self.world_data[y][x] == -1:
                 self.show_ghost = True
                 self.ghost_position = (x,y)
             else:
