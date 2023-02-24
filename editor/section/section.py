@@ -17,7 +17,7 @@ class Section:
         self.color = color
         self.surf.fill(self.color)
         self.has_mouse_event = False
-    
+
     def draw(self):
         self.surf.fill(self.color)
 

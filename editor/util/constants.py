@@ -19,6 +19,7 @@ class SpriteData:
     def load_sprites(self, path="assets/imgs"):
         try:
             file_names = os.listdir(path)
+            file_names.sort()
             for i, file_name in enumerate(file_names):
                 file_path = os.path.join(path, file_name)
                 tile = pygame.image.load(file_path)
@@ -45,6 +46,4 @@ class SpriteData:
 
 
 if __name__ == "__main__":
-    SpriteData.split_sheets("red-bush.png")
-
-
+    SpriteData.split_sheets(input())

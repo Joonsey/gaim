@@ -1,11 +1,12 @@
 from section.section import *
+from label.label import Label
 
 class Grid(Section):
     def __init__(self, dimensions, color, **kwargs) -> None:
         super().__init__(dimensions, color, **kwargs)
         self.background = None
         self.show_grid = True
-        self.world_data = [[0 for x in range(MAX_ROWS)] for y in range(MAX_COLUMNS)]
+        self.world_data = [[0 for _ in range(MAX_ROWS)] for __ in range(MAX_COLUMNS)]
         self.active_tile = None
         self.has_mouse_event = True
         self.ghost_position = (-1, -1)
@@ -13,6 +14,8 @@ class Grid(Section):
         self.is_scrolling = True
         self.scroll = [0,(MAX_COLUMNS * TILE_SIZE) - HEIGHT]
         self.prev_mouse_position = [0,0]
+        self.label = Label(24, "assets/fonts/Hurmit Medium Nerd Font Complete.otf")
+        self.grid_cursor_position = (0,0)
 
     def save_world(self, path: str= "level.json"):
         try:
@@ -52,9 +55,12 @@ class Grid(Section):
             x = (cursor[0] + self.scroll[0]) // TILE_SIZE
             y = (cursor[1] + self.scroll[1]) // TILE_SIZE
 
+
             if self.has_offset:
                 x = int((cursor[0] + self.scroll[0] - self.offset[0]) // TILE_SIZE)
                 y = int((cursor[1] + self.scroll[1] - self.offset[1]) // TILE_SIZE)
+
+            self.grid_cursor_position = (x,y)
 
             if self.sprite_data.active and self.world_data[y][x] == 0:
                 self.show_ghost = True
@@ -90,11 +96,14 @@ class Grid(Section):
             if mouse[2]:
                     self.world_data[y][x] = 0
 
-
     def draw(self):
         super().draw()
         if self.background != None:
             self.surf.blit(self.background, (0,0))
+
+        text_content = f"{self.grid_cursor_position[0]},{self.grid_cursor_position[1]}"
+        label = self.label.make_text_surf(text_content)
+        self.surf.blit(label, (0,0))
 
         for y in range(len(self.world_data)):
             for x, tile in enumerate(self.world_data[y]):
