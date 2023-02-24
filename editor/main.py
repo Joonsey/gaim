@@ -43,7 +43,7 @@ class Editor:
                 self.running = False
 
             if keys[pygame.K_d]:
-                self.sprite_data.active = 0
+                self.sprite_data.active = -1
 
             mouse = pygame.mouse.get_pressed()
             cursor = pygame.mouse.get_pos()

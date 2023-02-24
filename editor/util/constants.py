@@ -13,8 +13,8 @@ class SpriteData:
     def __init__(self) -> None:
         self.sprites = []
         self.load_sprites()
-        self.sprite_keys = {key+1:val for key, val in enumerate(self.sprites)}
-        self.active = 0
+        self.sprite_keys = {key:val for key, val in enumerate(self.sprites)}
+        self.active = -1
 
     def load_sprites(self, path="assets/imgs"):
         try:

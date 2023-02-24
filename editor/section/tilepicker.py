@@ -27,7 +27,7 @@ class Tilepicker(Section):
         y = 0
         for key, sprite in self.sprite_data.sprite_keys.items():
             if self.sprite_data.active == key:
-                if key % self.max_buttons == 0:
+                if key and key % self.max_buttons == 0:
                     y+=1
                 self.highlight_outline(sprite, (y*TILE_SIZE, key*TILE_SIZE))
             self.buttons[key] = self.surf.blit(sprite, (y*TILE_SIZE, key*TILE_SIZE))

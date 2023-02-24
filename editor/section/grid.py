@@ -6,7 +6,7 @@ class Grid(Section):
         super().__init__(dimensions, color, **kwargs)
         self.background = None
         self.show_grid = True
-        self.world_data = [[0 for _ in range(MAX_ROWS)] for __ in range(MAX_COLUMNS)]
+        self.world_data = [[-1 for _ in range(MAX_ROWS)] for __ in range(MAX_COLUMNS)]
         self.active_tile = None
         self.has_mouse_event = True
         self.ghost_position = (-1, -1)
@@ -62,7 +62,7 @@ class Grid(Section):
 
             self.grid_cursor_position = (x,y)
 
-            if self.sprite_data.active and self.world_data[y][x] == 0:
+            if self.sprite_data.active and self.world_data[y][x] == -1:
                 self.show_ghost = True
                 self.ghost_position = (x,y)
             else:
@@ -84,7 +84,7 @@ class Grid(Section):
 
             if mouse[0]:
                 try:
-                    if self.sprite_data.active:
+                    if self.sprite_data.active > -1:
                         self.world_data[y][x] = self.sprite_data.active
                         self.is_scrolling = False
                     else:
@@ -94,7 +94,7 @@ class Grid(Section):
                     pass
 
             if mouse[2]:
-                    self.world_data[y][x] = 0
+                    self.world_data[y][x] = -1
 
     def draw(self):
         super().draw()
@@ -111,10 +111,10 @@ class Grid(Section):
                 y_position = y*TILE_SIZE - self.scroll[1]
                 position = (x_position, y_position)
                 if tile > 0:
-                    self.surf.blit(self.sprite_data.sprites[tile-1], position)
+                    self.surf.blit(self.sprite_data.sprites[tile], position)
 
                 if (x,y) == self.ghost_position and self.show_ghost:
-                    self.draw_ghost_tile(self.sprite_data.sprites[self.sprite_data.active-1], position)
+                    self.draw_ghost_tile(self.sprite_data.sprites[self.sprite_data.active], position)
 
         if self.show_grid:
             for col in range(MAX_COLUMNS):
