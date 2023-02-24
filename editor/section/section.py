@@ -13,6 +13,7 @@ class Section:
         if "offset" in kwargs.keys():
             self.offset = kwargs["offset"]
             self.has_offset = True
+        self.active = True
         self.surf = pygame.surface.Surface(dimensions)
         self.color = color
         self.surf.fill(self.color)

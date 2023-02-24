@@ -2,10 +2,15 @@
 		{
 		"type": "Grid",
 		"color" : [5,5,5],
-		"relative_dimension" : [ 1,1 ],
+		"relative_dimension" : [ 1, 1 ],
 		"offset" : [ 0.2, 0 ]},
 		{
 		"type":"Tilepicker",
 		"color" : [21,21,23],
-		"relative_dimension" : [ 0.2,1 ]}
+		"relative_dimension" : [ 0.2,0.7 ]},
+		{
+		"type": "Autotiler",
+		"color" : [25,25,25],
+		"relative_dimension" : [ 0.2,0.3 ],
+		"offset" : [ 0 , 0.7 ]}
 ]}

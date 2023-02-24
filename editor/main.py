@@ -17,8 +17,9 @@ class Editor:
         self.running = True
         while self.running:
             for section in self.sections:
-                section.draw()
-                self.surface.blit(section.surf, section.offset)
+                if section.active:
+                    section.draw()
+                    self.surface.blit(section.surf, section.offset)
 
             pygame.display.update()
 
@@ -49,7 +50,7 @@ class Editor:
             cursor = pygame.mouse.get_pos()
 
             for section in self.sections:
-                if section.has_mouse_event:
+                if section.has_mouse_event and section.active:
                     section.handle_mouse_event(mouse, cursor)
 
     @staticmethod
