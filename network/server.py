@@ -7,7 +7,7 @@ import time
 import threading
 
 HOST = 'localhost'
-PORT = 5000
+PORT = 5555
 
 @dataclass
 class PlayerInfo:
@@ -27,6 +27,7 @@ class Server:
 
     def broadcast(self, packet: Packet):
         for player in self.players.copy().values():
+            player.last_packet_time = datetime.now()
             self.sock.sendto(packet.serialize(), player.address)
 
     def check_timeouts(self):
@@ -61,6 +62,13 @@ class Server:
                         del self.players[player.id]
                         print(player.name, "has disconnected")
 
+
+            if packet.packet_type == PacketType.PLAYER_POSITION:
+                #id, x, y = PayloadFormat.PLAYER_POSITION.unpack(packet.payload)
+                #print(f"recievd info abt {self.players[id].name.encode()} position")
+                packet = Packet(PacketType.PLAYER_POSITION, 0, packet.payload)
+                self.broadcast(packet)
+
             response_packet_data = response_packet.serialize()
 
 
@@ -78,5 +86,5 @@ class Server:
            
 
 if __name__ == "__main__":
-    s = Server(HOST, PORT)
+    s = Server("0.0.0.0", PORT)
     s.run()

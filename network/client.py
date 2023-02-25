@@ -1,17 +1,17 @@
 import socket
-from packet import *
+from network.packet import *
 import random, threading
 from dataclasses import dataclass
 
 @dataclass
 class Player:
     id: int
-    name: str
+    name: str = ""
     position: tuple[int, int] = (0,0)
     state: str = ""
 
-PORT = 5000
-HOST = "localhost"
+PORT = 5555
+HOST = "0.0.0.0"
 
 addr = (HOST, PORT)
 
@@ -20,6 +20,7 @@ class Client:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.host = host
         self.port = port
+        self.addr = (host, port)
         self.sequence_number = 0
         self.player_name = ""
         self.players : list[Player] = []
@@ -46,6 +47,17 @@ class Client:
 
         if player_to_remove:
             self.players.remove(player_to_remove)
+
+    def start(self):
+        thread = threading.Thread(target=self.run)
+        thread.start()
+
+    def stop(self):
+        self.die = True
+
+    def broadcast_position(self, position: tuple[int, int]):
+        packet = Packet(PacketType.PLAYER_POSITION, self.sequence_number, PayloadFormat.PLAYER_POSITION.pack(self.id, position[0], position[1]))
+        self.sock.sendto(packet.serialize(), (self.host, self.port))
 
     def run(self):
         self.sock.sendto(Packet(PacketType.JOIN_REQUEST, self.sequence_number, PayloadFormat.JOIN_REQUEST.pack(self.player_name.encode())).serialize(), (self.host, self.port))
@@ -80,7 +92,10 @@ class Client:
                     reason = PayloadFormat.DISCONNECT_REASON.unpack(packet.payload)[0]
                     print("exited due to:", reason)
                     self.die = True
-            
+                
+                elif packet.packet_type == PacketType.PLAYER_POSITION:
+                    id, x, y = PayloadFormat.PLAYER_POSITION.unpack(packet.payload)
+                    self.update_player(id, position=(x,y))
 
                 if self.die:
                     self.sock.sendto(Packet(PacketType.DISCONNECT, self.sequence_number, PayloadFormat.DISCONNECT_REASON.pack(DisconnectReason.EXPECTED)).serialize(), (self.host, self.port))
