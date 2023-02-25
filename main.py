@@ -6,6 +6,7 @@ RENDER_DIMENSION = (540, 360)
 size = 20
 HOST = "84.212.18.137"
 PORT = 5555
+FPS = 60
 
 pygame.init()
 
@@ -23,6 +24,7 @@ class Player:
 
 player = Player()
 client = Client(HOST, PORT)
+clock = pygame.time.Clock()
 
 client.player_name = "tac"
 
@@ -30,8 +32,7 @@ client.start()
         
 run = True
 while run:
-    surf = pygame.transform.smoothscale(surf, display.get_size())
-    display.blit(surf, (0,0))
+    clock.tick(FPS) 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -53,17 +54,22 @@ while run:
         if other_player.id != client.id:
             temp = pygame.surface.Surface((size, size))
             temp.fill((0,234,23))
-            display.blit(temp, other_player.position)
+            surf.blit(temp, other_player.position)
             if other_player.name:
                 name = other_player.name.rstrip("\x00")
                 text_surf = font.render(name.capitalize(), False, (255,255,255, 255))
                 text_pos = (other_player.position[0], other_player.position[1]-20)
-                display.blit(text_surf, text_pos)
+                surf.blit(text_surf, text_pos)
 
     player.surf.fill((242,24,24))
-    display.blit(player.surf, (player.x, player.y))
+
+    surf.blit(player.surf, (player.x, player.y))
+
+    resized_surf = pygame.transform.scale(surf, display.get_size())
+    display.blit(resized_surf, (0,0))
     pygame.display.flip()
     display.fill(0)
+    surf.fill(0)
 
 
 pygame.quit()

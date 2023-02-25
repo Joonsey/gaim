@@ -84,8 +84,7 @@ class Client:
                     print("new player connected!")
 
                 elif packet.packet_type == PacketType.NAME:
-                    name, id = PayloadFormat.NEW_PLAYER.unpack(packet.payload)
-                    print(name)
+                    name, id = PayloadFormat.NAME.unpack(packet.payload)
                     self.update_player(id, name=name.decode("utf-8"))
                 
                 elif packet.packet_type == PacketType.PLAYER_DISCONNECTED:

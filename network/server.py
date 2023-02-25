@@ -44,13 +44,12 @@ class Server:
 
             if packet.packet_type == PacketType.JOIN_REQUEST:
                 requested_name = PayloadFormat.JOIN_REQUEST.unpack(packet.payload)[0]
-                print("new player tried to connect with name:", requested_name.decode())
                 #player_names = [player.name for player in self.players.values()]
                 player_names = ["banned"]
                 if requested_name not in player_names:
                     self.IOTA += 1
                     for player in self.players.values():
-                        self.sock.sendto(Packet(PacketType.NEW_PLAYER, 0, PayloadFormat.NEW_PLAYER.pack(requested_name, player.id)).serialize(), player.address)
+                        self.sock.sendto(Packet(PacketType.NEW_PLAYER, 0, PayloadFormat.NEW_PLAYER.pack(requested_name, self.IOTA)).serialize(), player.address)
                         self.sock.sendto(Packet(PacketType.NAME, packet.sequence_number, PayloadFormat.NAME.pack(player.name, player.id)).serialize(), client_address)
 
                     self.players[self.IOTA] = PlayerInfo(self.IOTA, client_address, requested_name, datetime.now())

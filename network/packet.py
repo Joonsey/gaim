@@ -6,10 +6,10 @@ class PacketType:
     PLAYER_POSITION = 3
     PLAYER_ACTION = 4
     NEW_PLAYER = 5
-    NAME = 5
-    DISCONNECT = 6
-    PLAYER_DISCONNECTED = 7
-    KEEP_ALIVE = 8
+    NAME = 6
+    DISCONNECT = 7
+    PLAYER_DISCONNECTED = 8
+    KEEP_ALIVE = 9
 
 class DisconnectReason:
     EXPECTED = 0
