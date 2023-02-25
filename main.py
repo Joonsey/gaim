@@ -26,8 +26,12 @@ class Game:
         self.client = Client(HOST, PORT)
         self.client.player_name = "Jae"
         self.client.start()
+        self.scroll = [0,0]
 
         self.running = True
+
+    def scroll_compensation(self, position):
+        return position[0] - self.scroll[0], position[1] - self.scroll[1]
 
     def run(self):
         while self.running:
@@ -36,25 +40,30 @@ class Game:
                 if event.type == pygame.QUIT:
                     run = False
 
+            self.scroll[0] += (self.player.x - self.scroll[0] - (self.surf.get_width() / 2)) / 10
+            self.scroll[1] += (self.player.y - self.scroll[1] - (self.surf.get_height() / 2)) / 10
+
             keys = pygame.key.get_pressed()
             self.player.handle_movement(keys, self.deltatime)
 
             self.client.broadcast_position(self.player.position)
 
             for other_player in self.client.players.copy():
-                print(other_player)
                 if other_player.id != self.client.id:
                     temp = pygame.surface.Surface((size, size))
                     temp.fill((0,234,23))
-                    self.surf.blit(temp, other_player.position)
+                    self.surf.blit(temp, self.scroll_compensation(other_player.position))
                     if other_player.name:
                         name = other_player.name.rstrip("\x00")
                         text_surf = font.render(name.capitalize(), False, (255,255,255, 255))
-                        text_pos = (other_player.position[0], other_player.position[1]-20)
+                        text_pos = (
+                            other_player.position[0] - self.scroll[0],
+                            other_player.position[1] - self.scroll[1]
+                            -20)
                         self.surf.blit(text_surf, text_pos)
 
             self.player.surf.fill((242,24,24))
-            self.surf.blit(self.player.surf, (self.player.x, self.player.y))
+            self.surf.blit(self.player.surf, self.scroll_compensation(self.player.position))
 
             resized_surf = pygame.transform.scale(self.surf, self.display.get_size())
             self.display.blit(resized_surf, (0,0))

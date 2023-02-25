@@ -66,7 +66,7 @@ class Entity(Physics_object):
         super().__init__(x, y, w, h)
         self.position = (x,y)
         self.acceleration = 1
-        self.speed = 60
+        self.speed = 45
         self.surf = pygame.surface.Surface((w, h))
 
     def update_position(self, x, y):
