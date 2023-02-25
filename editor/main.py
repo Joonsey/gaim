@@ -26,7 +26,6 @@ class Editor:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                    pygame.quit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_g:
                         for sec in self.sections:
@@ -52,6 +51,8 @@ class Editor:
             for section in self.sections:
                 if section.has_mouse_event and section.active:
                     section.handle_mouse_event(mouse, cursor)
+        
+        pygame.quit()
 
     @staticmethod
     def parse_from_json(path: str = "config.json") -> list[Section]:

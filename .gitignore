@@ -4,3 +4,4 @@ dist/*
 dist
 build/*
 build
+editor/assets/imgs/*
