@@ -57,13 +57,17 @@ class Server:
                     response_packet = Packet(PacketType.JOIN_RESPONSE, packet.sequence_number, PayloadFormat.JOIN_RESPONSE.pack(JoinResponses.ACCEPTED, self.IOTA))
                 else:
                     response_packet = Packet(PacketType.JOIN_RESPONSE, packet.sequence_number, PayloadFormat.JOIN_RESPONSE.pack(JoinResponses.DENIED, 0))
-            
+
+            if packet.packet_type == PacketType.PLAYER_STATE_CHANGE:
+                for player in self.players.copy().values():
+                    packet = Packet(PacketType.PLAYER_STATE_CHANGE, 0, packet.payload)
+                    self.broadcast(packet)
 
             if packet.packet_type == PacketType.DISCONNECT:
                 for player in self.players.copy().values():
                     if player.address == client_address:
                         del self.players[player.id]
-                        print(player.name.decode(), "has disconnected")
+                        print(player.name.replace("\x00", ""), "has disconnected")
                         reason = PayloadFormat.DISCONNECT_REASON.unpack(packet.payload)[0]
                         packet = Packet(PacketType.PLAYER_DISCONNECTED, 0, PayloadFormat.PLAYER_DISCONNECTED.pack(player.id, reason))
                         self.broadcast(packet)

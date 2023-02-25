@@ -11,6 +11,7 @@ class PacketType(IntEnum):
     DISCONNECT = auto()
     PLAYER_DISCONNECTED = auto()
     KEEP_ALIVE = auto()
+    PLAYER_STATE_CHANGE = auto()
 
 class DisconnectReason(IntEnum):
     EXPECTED = auto()
@@ -34,6 +35,7 @@ class PayloadFormat:
     DISCONNECT_REASON = struct.Struct('!I')
     PLAYER_DISCONNECTED = struct.Struct('!II')
     TIME = struct.Struct('!d')
+    PLAYER_STATE_CHANGE = struct.Struct('!II')
 
 class Packet:
     HEADER_SIZE = struct.calcsize('IBII')
@@ -61,10 +63,9 @@ class Packet:
             raise ValueError("Invalid packet - packet is too short")
 
         magic_number, packet_type, sequence_number, payload_length = struct.unpack('IIII', serialized_data[:Packet.HEADER_SIZE])
-        
+
         if magic_number != Packet.MAGIC_NUMBER:
-            print("WARNING: magic number mis-match of packets. \npacket will be disqualified")
-            return None
+            raise ValueError("Invalid packet - magic number mis-match of packets. \npacket will be disqualified")
         payload = serialized_data[Packet.HEADER_SIZE: Packet.HEADER_SIZE+ payload_length]
 
         return Packet(packet_type, sequence_number, payload)

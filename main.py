@@ -6,14 +6,14 @@ from entities import *
 DISPLAY_DIMESION = (1080, 720)
 RENDER_DIMENSION = (540, 360)
 
-size = 20
+size = 16
 HOST = "84.212.18.137"
 PORT = 5555
 FPS = 60
 
 pygame.init()
 
-font = pygame.font.SysFont(pygame.font.get_default_font(), 12)
+font = pygame.font.SysFont(pygame.font.get_default_font(), 16)
 
 class Game:
     def __init__(self, DISPLAY_DIMESION) -> None:

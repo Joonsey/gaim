@@ -8,7 +8,7 @@ class Player:
     id: int
     name: str = ""
     position: tuple[int, int] = (0,0)
-    state: str = ""
+    state: int = 0
 
 PORT = 5555
 HOST = "0.0.0.0"
@@ -55,12 +55,16 @@ class Client:
     def stop(self):
         self.die = True
 
+    def broadcast_state(self, state: int):
+        packet = Packet(PacketType.PLAYER_STATE_CHANGE, self.sequence_number, PayloadFormat.PLAYER_STATE_CHANGE.pack(self.id, state))
+        self.sock.sendto(packet.serialize(), self.addr)
+
     def broadcast_position(self, position: tuple[int, int]):
         packet = Packet(PacketType.PLAYER_POSITION, self.sequence_number, PayloadFormat.PLAYER_POSITION.pack(self.id, position[0], position[1]))
-        self.sock.sendto(packet.serialize(), (self.host, self.port))
+        self.sock.sendto(packet.serialize(), self.addr)
 
     def run(self):
-        self.sock.sendto(Packet(PacketType.JOIN_REQUEST, self.sequence_number, PayloadFormat.JOIN_REQUEST.pack(self.player_name.encode())).serialize(), (self.host, self.port))
+        self.sock.sendto(Packet(PacketType.JOIN_REQUEST, self.sequence_number, PayloadFormat.JOIN_REQUEST.pack(self.player_name.encode())).serialize(), self.addr)
         self.sequence_number  += 1
 
         try:
@@ -77,7 +81,7 @@ class Client:
                     elif response == JoinResponses.DENIED:
                         print("Join request denied sadge")
                         return
-                
+
                 elif packet.packet_type == PacketType.NEW_PLAYER:
                     name, id = PayloadFormat.NEW_PLAYER.unpack(packet.payload)
                     self.update_player(id, name=name.decode("utf-8"))
@@ -86,7 +90,7 @@ class Client:
                 elif packet.packet_type == PacketType.NAME:
                     name, id = PayloadFormat.NAME.unpack(packet.payload)
                     self.update_player(id, name=name.decode("utf-8"))
-                
+
                 elif packet.packet_type == PacketType.PLAYER_DISCONNECTED:
                     id, reason = PayloadFormat.PLAYER_DISCONNECTED.unpack(packet.payload)
                     self.remove_player(id)
@@ -95,10 +99,14 @@ class Client:
                     reason = PayloadFormat.DISCONNECT_REASON.unpack(packet.payload)[0]
                     print("exited due to:", reason)
                     self.die = True
-                
+
                 elif packet.packet_type == PacketType.PLAYER_POSITION:
                     id, x, y = PayloadFormat.PLAYER_POSITION.unpack(packet.payload)
                     self.update_player(id, position=(x,y))
+
+                elif packet.packet_type == PacketType.PLAYER_STATE_CHANGE:
+                    id, state = PayloadFormat.PLAYER_STATE_CHANGE.unpack(packet.payload)
+                    self.update_player(id, state=state)
 
                 if self.die:
                     self.sock.sendto(Packet(PacketType.DISCONNECT, self.sequence_number, PayloadFormat.DISCONNECT_REASON.pack(DisconnectReason.EXPECTED)).serialize(), (self.host, self.port))
@@ -106,7 +114,7 @@ class Client:
 
         except Exception as e:
             self.sock.sendto(Packet(PacketType.DISCONNECT, self.sequence_number, PayloadFormat.DISCONNECT_REASON.pack(DisconnectReason.UNEXPECTED)).serialize(), (self.host, self.port))
-            raise e 
+            raise e
 
 
 if __name__ == "__main__":
