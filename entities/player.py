@@ -16,6 +16,13 @@ class Player(Entity):
         self.acceleration = self.base_acceleration
         self.max_velocity = .5
 
+
+
+
+
+        #TODO pretty sure velocity acceleration are the opposite terms
+        #don't care to fix it now, maybe in the future
+
     def handle_movement(self, keys, dt):
         normalized_dt = dt/100
         if keys[pygame.K_w]:
