@@ -6,6 +6,7 @@ class PacketType:
     PLAYER_POSITION = 3
     PLAYER_ACTION = 4
     NEW_PLAYER = 5
+    NAME = 5
     DISCONNECT = 6
     PLAYER_DISCONNECTED = 7
     KEEP_ALIVE = 8
@@ -23,6 +24,7 @@ class PayloadFormat:
     JOIN_REQUEST = struct.Struct('16s')
     JOIN_RESPONSE = struct.Struct('!II')
     NEW_PLAYER = struct.Struct('!16sI')
+    NAME = struct.Struct('!16sI')
     PLAYER_POSITION = struct.Struct('!Idd')
     PLAYER_MOVEMENT = struct.Struct('!Idddd')
     PLAYER_CHAT_MESSAGE = struct.Struct('32s')

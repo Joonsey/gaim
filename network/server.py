@@ -45,27 +45,31 @@ class Server:
             if packet.packet_type == PacketType.JOIN_REQUEST:
                 requested_name = PayloadFormat.JOIN_REQUEST.unpack(packet.payload)[0]
                 print("new player tried to connect with name:", requested_name.decode())
-                player_names = [player.name for player in self.players.values()]
+                #player_names = [player.name for player in self.players.values()]
+                player_names = ["banned"]
                 if requested_name not in player_names:
                     self.IOTA += 1
                     for player in self.players.values():
                         self.sock.sendto(Packet(PacketType.NEW_PLAYER, 0, PayloadFormat.NEW_PLAYER.pack(requested_name, player.id)).serialize(), player.address)
+                        self.sock.sendto(Packet(PacketType.NAME, packet.sequence_number, PayloadFormat.NAME.pack(player.name, player.id)).serialize(), client_address)
 
                     self.players[self.IOTA] = PlayerInfo(self.IOTA, client_address, requested_name, datetime.now())
                     response_packet = Packet(PacketType.JOIN_RESPONSE, packet.sequence_number, PayloadFormat.JOIN_RESPONSE.pack(JoinResponses.ACCEPTED, self.IOTA))
                 else:
                     response_packet = Packet(PacketType.JOIN_RESPONSE, packet.sequence_number, PayloadFormat.JOIN_RESPONSE.pack(JoinResponses.DENIED, 0))
             
+
             if packet.packet_type == PacketType.DISCONNECT:
                 for player in self.players.copy().values():
                     if player.address == client_address:
                         del self.players[player.id]
-                        print(player.name, "has disconnected")
+                        print(player.name.decode(), "has disconnected")
+                        reason = PayloadFormat.DISCONNECT_REASON.unpack(packet.payload)[0]
+                        packet = Packet(PacketType.PLAYER_DISCONNECTED, 0, PayloadFormat.PLAYER_DISCONNECTED.pack(player.id, reason))
+                        self.broadcast(packet)
 
 
             if packet.packet_type == PacketType.PLAYER_POSITION:
-                #id, x, y = PayloadFormat.PLAYER_POSITION.unpack(packet.payload)
-                #print(f"recievd info abt {self.players[id].name.encode()} position")
                 packet = Packet(PacketType.PLAYER_POSITION, 0, packet.payload)
                 self.broadcast(packet)
 

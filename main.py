@@ -12,6 +12,8 @@ pygame.init()
 display = pygame.display.set_mode(DISPLAY_DIMESION)
 surf = pygame.surface.Surface(RENDER_DIMENSION)
 
+font = pygame.font.SysFont(pygame.font.get_default_font(), 36)
+
 class Player:
     def __init__(self) -> None:
         self.surf = pygame.surface.Surface((size, size))
@@ -22,8 +24,7 @@ class Player:
 player = Player()
 client = Client(HOST, PORT)
 
-name = input("insert name\n>>>")
-client.player_name = name
+client.player_name = "tac"
 
 client.start()
         
@@ -49,9 +50,15 @@ while run:
     client.broadcast_position((player.x, player.y))
 
     for other_player in client.players.copy():
-        temp = pygame.surface.Surface((size, size))
-        temp.fill((0,234,23))
-        display.blit(temp, other_player.position)
+        if other_player.id != client.id:
+            temp = pygame.surface.Surface((size, size))
+            temp.fill((0,234,23))
+            display.blit(temp, other_player.position)
+            if other_player.name:
+                name = other_player.name.rstrip("\x00")
+                text_surf = font.render(name.capitalize(), False, (255,255,255, 255))
+                text_pos = (other_player.position[0], other_player.position[1]-20)
+                display.blit(text_surf, text_pos)
 
     player.surf.fill((242,24,24))
     display.blit(player.surf, (player.x, player.y))
@@ -61,4 +68,3 @@ while run:
 
 pygame.quit()
 client.stop()
-exit()

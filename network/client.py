@@ -74,15 +74,19 @@ class Client:
                     if response == JoinResponses.ACCEPTED:
                         self.id = id
                         print("Join request accepted")
-                        print(self.id)
                     elif response == JoinResponses.DENIED:
                         print("Join request denied sadge")
                         return
                 
                 elif packet.packet_type == PacketType.NEW_PLAYER:
                     name, id = PayloadFormat.NEW_PLAYER.unpack(packet.payload)
-                    self.update_player(id, name=name.decode())
+                    self.update_player(id, name=name.decode("utf-8"))
                     print("new player connected!")
+
+                elif packet.packet_type == PacketType.NAME:
+                    name, id = PayloadFormat.NEW_PLAYER.unpack(packet.payload)
+                    print(name)
+                    self.update_player(id, name=name.decode("utf-8"))
                 
                 elif packet.packet_type == PacketType.PLAYER_DISCONNECTED:
                     id, reason = PayloadFormat.PLAYER_DISCONNECTED.unpack(packet.payload)
@@ -110,6 +114,6 @@ if __name__ == "__main__":
     name = input()
     client = Client(HOST,  PORT)
     client.player_name = name
-    thread = threading.Thread(target=client.run)
+    thread = threading.Thread(target=client.run, daemon=True)
     thread.run()
     
