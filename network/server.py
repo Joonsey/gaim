@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from typing import Tuple
 from datetime import datetime, timedelta
 import time
+import sys
 import threading
 
-HOST = 'localhost'
+HOST = "0.0.0.0"
 PORT = 5555
 
 @dataclass
@@ -14,7 +15,7 @@ class PlayerInfo:
     id: int
     address: Tuple[str, int]
     name: str
-    last_packet_time: float = 0.0
+    last_packet_time: datetime = datetime.now()
 
 class Server:
     def __init__(self, host, port) -> None:
@@ -37,7 +38,7 @@ class Server:
                 print(player.name.decode(), "has timed out")
                 del self.players[player.id]
                 self.sock.sendto(Packet(PacketType.DISCONNECT, 0, PayloadFormat.DISCONNECT_REASON.pack(DisconnectReason.TIMEOUT)).serialize(), player.address)
-    
+
     def handle_request(self, data, client_address):
             packet = Packet.deserialize(data)
             response_packet = Packet(PacketType.KEEP_ALIVE, packet.sequence_number, PayloadFormat.TIME.pack(time.time()))
@@ -89,5 +90,7 @@ class Server:
            
 
 if __name__ == "__main__":
-    s = Server("0.0.0.0", PORT)
+    if "-l" in sys.argv:
+        HOST = "localhost"
+    s = Server(HOST, PORT)
     s.run()

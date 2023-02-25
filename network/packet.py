@@ -1,24 +1,25 @@
 import struct
+from enum import IntEnum, auto
 
-class PacketType:
-    JOIN_REQUEST = 1
-    JOIN_RESPONSE = 2
-    PLAYER_POSITION = 3
-    PLAYER_ACTION = 4
-    NEW_PLAYER = 5
-    NAME = 6
-    DISCONNECT = 7
-    PLAYER_DISCONNECTED = 8
-    KEEP_ALIVE = 9
+class PacketType(IntEnum):
+    JOIN_REQUEST = auto()
+    JOIN_RESPONSE = auto()
+    PLAYER_POSITION = auto()
+    PLAYER_ACTION = auto()
+    NEW_PLAYER = auto()
+    NAME = auto()
+    DISCONNECT = auto()
+    PLAYER_DISCONNECTED = auto()
+    KEEP_ALIVE = auto()
 
-class DisconnectReason:
-    EXPECTED = 0
-    UNEXPECTED = 1
-    TIMEOUT = 2
+class DisconnectReason(IntEnum):
+    EXPECTED = auto()
+    UNEXPECTED = auto()
+    TIMEOUT = auto()
 
-class JoinResponses:
-    ACCEPTED = 0
-    DENIED = 1
+class JoinResponses(IntEnum):
+    ACCEPTED = auto()
+    DENIED = auto()
 
 class PayloadFormat:
     JOIN_REQUEST = struct.Struct('16s')
