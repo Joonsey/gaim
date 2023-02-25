@@ -33,6 +33,10 @@ class Game:
     def scroll_compensation(self, position):
         return position[0] - self.scroll[0], position[1] - self.scroll[1]
 
+    def change_player_state(self, state: PlayerState):
+        self.player.state = state
+        self.client.broadcast_state(self.player.state)
+
     def run(self):
         while self.running:
             self.deltatime = self.clock.tick(FPS)
