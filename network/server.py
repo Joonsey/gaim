@@ -87,8 +87,8 @@ class Server:
             if requested_name not in player_names:
                 self.IOTA += 1
                 for player in self.players.values():
-                    self.sock.sendto(Packet(PacketType.NEW_PLAYER, 0, PayloadFormat.NEW_PLAYER.pack(requested_name, self.IOTA)).serialize(), player.address)
-                    self.sock.sendto(Packet(PacketType.NAME, packet.sequence_number, PayloadFormat.NAME.pack(player.name, player.id)).serialize(), client_address)
+                    self.sock.sendto(Packet(PacketType.NEW_PLAYER, 0, PayloadFormat.NEW_PLAYER.pack(requested_name.encode(), self.IOTA)).serialize(), player.address)
+                    self.sock.sendto(Packet(PacketType.NAME, packet.sequence_number, PayloadFormat.NAME.pack(player.name.encode(), player.id)).serialize(), client_address)
 
                 self.players[self.IOTA] = PlayerInfo(self.IOTA, client_address, requested_name, datetime.now())
                 response_packet = Packet(PacketType.JOIN_RESPONSE, packet.sequence_number, PayloadFormat.JOIN_RESPONSE.pack(JoinResponses.ACCEPTED, self.IOTA))
