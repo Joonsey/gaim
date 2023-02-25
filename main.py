@@ -25,7 +25,6 @@ class Game:
         self.player = Player(0,0, size, size)
         self.client = Client(HOST, PORT)
         self.client.player_name = "Jae"
-        self.client.start()
         self.scroll = [0,0]
 
         self.running = True
@@ -38,11 +37,14 @@ class Game:
         self.client.broadcast_state(self.player.state)
 
     def run(self):
+        self.client.start()
+
         while self.running:
             self.deltatime = self.clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
+                    self.running = False
+
 
             self.scroll[0] += (self.player.x - self.scroll[0] - (self.surf.get_width() / 2)) / 10
             self.scroll[1] += (self.player.y - self.scroll[1] - (self.surf.get_height() / 2)) / 10
@@ -76,6 +78,8 @@ class Game:
             self.surf.fill(0)
 
         self.client.stop()
+        pygame.quit()
+
 
 if __name__ == "__main__":
     if "-l" in sys.argv:

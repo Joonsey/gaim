@@ -12,6 +12,7 @@ class PacketType(IntEnum):
     PLAYER_DISCONNECTED = auto()
     KEEP_ALIVE = auto()
     PLAYER_STATE_CHANGE = auto()
+    ENEMY_STATUS = auto()
 
 class DisconnectReason(IntEnum):
     EXPECTED = auto()
@@ -38,7 +39,7 @@ class PayloadFormat:
     PLAYER_STATE_CHANGE = struct.Struct('!II')
 
 class Packet:
-    HEADER_SIZE = struct.calcsize('IBII')
+    HEADER_SIZE = struct.calcsize('IIII')
     MAGIC_NUMBER = 0xDEADBEEF
 
     def __init__(self, packet_type, sequence_number, payload):
