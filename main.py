@@ -2,6 +2,7 @@ import pygame
 from network.client import Client
 import sys
 from entities import *
+from world.world import World
 
 DISPLAY_DIMESION = (1080, 720)
 RENDER_DIMENSION = (540, 360)
@@ -22,7 +23,8 @@ class Game:
         self.clock = pygame.time.Clock()
         self.deltatime = 0
 
-        self.player = Player(0,0, size, size)
+        self.world = World(size, self.surf)
+        self.player = self.world.player
         self.client = Client(HOST, PORT)
         self.client.player_name = "Jae"
         self.scroll = [0,0]
