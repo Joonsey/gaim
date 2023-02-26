@@ -53,7 +53,7 @@ class Physics_object:
 
 
     def update_position(self, x, y):
-        self.x, self.y = self.x, self.y
+        self.x, self.y = x, y
 
     def check_collision(self, obj):
         if self.x < obj.x + obj.w and self.x + self.w > obj.x and self.y < obj.y + obj.h and self.h + self.y > obj.y:
