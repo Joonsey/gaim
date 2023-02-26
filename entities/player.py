@@ -1,6 +1,9 @@
-from enum import IntEnum, auto, StrEnum
+from enum import IntEnum, auto
+import os
 import pygame
 from entities.entity import Entity
+
+sprite_path = "editor/assets/characters/player"
 
 class PlayerState(IntEnum):
     IDLE = auto()
@@ -18,8 +21,8 @@ class Player(Entity):
         #TODO pretty sure velocity acceleration are the opposite terms
         #don't care to fix it now, maybe in the future
         self.animations = {
-            PlayerState.IDLE: [pygame.image.load("editor/assets/characters/player/player.png")],
-            PlayerState.RUNNING: [ pygame.image.load("editor/assets/characters/player/player_running-"+str(x)+"-0.png") for x in range(4) ],
+            PlayerState.IDLE: [pygame.image.load(sprite_path + "/player.png")],
+            PlayerState.RUNNING: [ pygame.image.load(sprite_path + "/player_running-"+str(x)+"-0.png") for x in range(len(list(filter(lambda e: "player_running" in e, [x for x in os.listdir(sprite_path)]))))],
             PlayerState.ATTACKING: []
         }
         self.animation_frame = 0
