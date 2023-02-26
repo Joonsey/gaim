@@ -5,6 +5,7 @@ class Grid(Section):
     def __init__(self, dimensions, color, **kwargs) -> None:
         super().__init__(dimensions, color, **kwargs)
         self.show_grid = False
+        self.background_opacity = 128
         self.world_data = [[-1 for _ in range(MAX_ROWS)] for __ in range(MAX_COLUMNS)]
         self.active_tile = None
         self.has_mouse_event = True
@@ -96,6 +97,7 @@ class Grid(Section):
         super().draw()
         if self.sprite_data.bg != None:
             upscaled_bg = pygame.transform.scale(self.sprite_data.bg, (MAX_COLUMNS*TILE_SIZE, MAX_ROWS*TILE_SIZE))
+            upscaled_bg.set_alpha(self.background_opacity)
             self.surf.blit(upscaled_bg, (-self.scroll[0], -self.scroll[1]))
 
         text_content = f"{self.grid_cursor_position[0]},{self.grid_cursor_position[1]}"

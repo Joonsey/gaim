@@ -42,14 +42,15 @@ class SpriteData:
     def split_sheets(file_name, assets_path: str = "assets/sheets/", tile_size=TILE_SIZE) -> None:
         file, ext = os.path.splitext(assets_path+file_name)
         try:
-            with Image.open(assets_path+file_name) as im:
+            with Image.open(file + ext) as im:
                 columns = im.width // tile_size
                 rows = im.height // tile_size
                 for column in range(columns):
                     for row in range(rows):
                         x_offset = column*tile_size
                         y_offset = row*tile_size
-                        cropped_image_name = f"assets/imgs/{file_name}-{column}-{row}{ext}"
+                        name_no_ext = file_name.replace(ext, "")
+                        cropped_image_name = f"assets/imgs/{name_no_ext}-{column}-{row}{ext}"
                         im.crop((x_offset, y_offset, x_offset + tile_size, y_offset+tile_size)).save(cropped_image_name, 'png')
         except Exception as e:
             print("Error loading spritesheet at: ", assets_path+file_name)

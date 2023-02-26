@@ -52,7 +52,12 @@ class Game:
             self.scroll[1] += (self.player.y - self.scroll[1] - (self.surf.get_height() / 2)) / 10
 
             keys = pygame.key.get_pressed()
+            prev_state = self.player.state
+
             self.player.handle_movement(keys, self.deltatime)
+            if prev_state != self.player.state:
+                self.client.broadcast_state(self.player.state)
+                
 
             self.client.broadcast_position(self.player.position)
 
@@ -70,8 +75,13 @@ class Game:
                             -20)
                         self.surf.blit(text_surf, text_pos)
 
-            self.player.surf.fill((242,24,24))
+
+           
+            self.player.animate()
             self.surf.blit(self.player.surf, self.scroll_compensation(self.player.position))
+
+
+
 
             resized_surf = pygame.transform.scale(self.surf, self.display.get_size())
             self.display.blit(resized_surf, (0,0))
