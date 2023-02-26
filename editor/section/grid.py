@@ -4,7 +4,6 @@ from label.label import Label
 class Grid(Section):
     def __init__(self, dimensions, color, **kwargs) -> None:
         super().__init__(dimensions, color, **kwargs)
-        self.background = None
         self.show_grid = False
         self.world_data = [[-1 for _ in range(MAX_ROWS)] for __ in range(MAX_COLUMNS)]
         self.active_tile = None
@@ -43,9 +42,6 @@ class Grid(Section):
     def toggle_grid(self):
         self.show_grid = not self.show_grid
 
-    def set_background(self, surface):
-        self.background = surface
-
     def handle_mouse_event(self, mouse, cursor):
         rect = self.surf.get_bounding_rect()
         if self.has_offset:
@@ -75,8 +71,8 @@ class Grid(Section):
                     self.scroll[0] = 0
                 if self.scroll[1] < 0:
                     self.scroll[1] = 0
-                if self.scroll[0] > MAX_ROWS * TILE_SIZE:
-                    self.scroll[0] = MAX_ROWS * TILE_SIZE
+                if self.scroll[0] > (MAX_ROWS * TILE_SIZE) - WIDTH:
+                    self.scroll[0] = (MAX_ROWS * TILE_SIZE) - WIDTH
                 if self.scroll[1] > (MAX_COLUMNS * TILE_SIZE) - HEIGHT:
                     self.scroll[1] = (MAX_COLUMNS * TILE_SIZE) - HEIGHT
 
@@ -98,8 +94,9 @@ class Grid(Section):
 
     def draw(self):
         super().draw()
-        if self.background != None:
-            self.surf.blit(self.background, (0,0))
+        if self.sprite_data.bg != None:
+            upscaled_bg = pygame.transform.scale(self.sprite_data.bg, (MAX_COLUMNS*TILE_SIZE, MAX_ROWS*TILE_SIZE))
+            self.surf.blit(upscaled_bg, (-self.scroll[0], -self.scroll[1]))
 
         text_content = f"{self.grid_cursor_position[0]},{self.grid_cursor_position[1]}"
         label = self.label.make_text_surf(text_content)

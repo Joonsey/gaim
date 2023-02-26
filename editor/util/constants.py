@@ -16,6 +16,8 @@ class SpriteData:
         self.sprite_keys = {key:val for key, val in enumerate(self.sprites)}
         self.active = -1
         self.flipped = False
+        self.bg = None
+        self.load_background()
 
     def load_sprites(self, path="assets/imgs"):
         try:
@@ -29,6 +31,12 @@ class SpriteData:
                 self.sprites.append(tile)
         except FileNotFoundError:
             print(f"asset path invalid: '{path}'")
+
+    def load_background(self, path="assets/bg/bg.png"):
+        try:
+            self.bg = pygame.image.load(path)
+        except:
+            print("unable to load background image")
 
     @staticmethod
     def split_sheets(file_name, assets_path: str = "assets/sheets/", tile_size=TILE_SIZE) -> None:
@@ -49,4 +57,4 @@ class SpriteData:
 
 
 if __name__ == "__main__":
-    SpriteData.split_sheets(input(), tile_size=8)
+    SpriteData.split_sheets(input(), tile_size=16)
