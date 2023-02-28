@@ -1,6 +1,6 @@
 import socket
 from network.packet import *
-import random, threading
+import threading
 from dataclasses import dataclass
 import json
 import sys
@@ -38,7 +38,7 @@ class Client:
         self.die = False
         self.dead = False
         self.accepted_connection = False
-    
+
     def update_player(self, player_id, **kwargs):
         for player in self.players:
             if player.id == player_id:
@@ -49,7 +49,7 @@ class Client:
             # player not found, create new player object
             player = Player(id=player_id, **kwargs)
             self.players.append(player)
-    
+
     def remove_player(self, player_id):
         player_to_remove = None
         for player in self.players:

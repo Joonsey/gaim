@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from typing import Tuple
 from datetime import datetime, timedelta
 import time
+import math
 import json
 import sys
 import threading
+import random
 
 HOST = "0.0.0.0"
 PORT = 5555
@@ -24,6 +26,24 @@ class Enemy:
     type: int
     position: Tuple[int, int]
     health: int = 100
+    state: int = 1
+    target_location: Tuple[int, int] = (0,0)
+    speed: int = 5
+    _range: int = 5
+
+
+    def in_range(self, own_location: Tuple[int,int], target_location: Tuple[int,int]):
+        return own_location[0] - target_location[0] < self._range and own_location[1] - target_location[1] < self._range
+
+    def propogate(self):
+        if self.state == 1:
+            if self.in_range(self.position, self.target_location):
+                self.target_location = random.randint(self.position[0] - 20, self.position[0] + 20), random.randint(self.position[1] - 20, self.position[1] + 20)
+            else:
+                theta = math.atan2((self.target_location[1] - self.position[1]), (self.target_location[0] - self.position[0]))
+                x = int(math.cos(theta)* self.speed)
+                y = int(math.sin(theta)* self.speed)
+                self.position = (self.position[0] + x, self.position[1] + y)
 
     def to_dict(self):
         return {
@@ -31,8 +51,9 @@ class Enemy:
             "type":self.type,
             "position":self.position,
             "health":self.health,
+            "state":self.state,
         }
-    
+
     def to_json(self):
         return json.dumps(self.to_dict())
 
@@ -57,6 +78,10 @@ class Server:
             5 : Enemy(5, 0, (0,0), 100),
         }
 
+    def calculate_enemy_behaviour(self):
+        for enemy in self.enemies.values():
+            enemy.propogate()
+
     def broadcast(self, packet: Packet):
         for player in self.players.copy().values():
             player.last_packet_time = datetime.now()
@@ -66,7 +91,7 @@ class Server:
         now = datetime.now()
         for player in self.players.copy().values():
             if now - player.last_packet_time > timedelta(seconds=self.timeout):
-                print(player.name.decode(), "has timed out")
+                print(player.name, "has timed out")
                 del self.players[player.id]
                 self.sock.sendto(Packet(PacketType.DISCONNECT, 0, PayloadFormat.DISCONNECT_REASON.pack(DisconnectReason.TIMEOUT)).serialize(), player.address)
 
@@ -76,7 +101,8 @@ class Server:
 
 
         now = datetime.now()
-        if now - self.last_packet_time > timedelta(microseconds=self.interval):
+        if now - self.last_packet_time > timedelta(milliseconds=self.interval):
+            self.calculate_enemy_behaviour()
             enemy_status_packet = Packet(PacketType.ENEMY_STATUS, 0, json.dumps([enemy.to_dict() for enemy in self.enemies.values()]).encode())
             self.broadcast(enemy_status_packet)
 
@@ -129,7 +155,6 @@ class Server:
 
             threading.Thread(target=self.handle_request, args=(data, client_address)).start()
 
-            
 
 if __name__ == "__main__":
     if "-l" in sys.argv:

@@ -1,5 +1,5 @@
 import pygame
-from network.client import Client
+import network.client
 import sys
 from entities import *
 from world.world import World
@@ -25,11 +25,26 @@ class Game:
 
         self.world = World(size, self.surf)
         self.player = self.world.player
-        self.client = Client(HOST, PORT)
+        self.client = network.client.Client(HOST, PORT)
         self.client.player_name = "Jae"
         self.scroll = [0,0]
 
         self.running = True
+
+    def render_entities(self, entities) -> None:
+        for entity in entities.copy():
+            if isinstance(entity, network.client.Player):
+                # doesn't render if it's the current player
+                # ideally it should NOT include the player in the packet form the server
+                if entity.id != self.client.id:
+                    entity_surf = pygame.surface.Surface((size, size))
+                    entity_surf.fill((0,234,23))
+                    self.surf.blit(entity_surf, self.scroll_compensation(entity.position))
+
+            if isinstance(entity, network.client.Enemy):
+                entity_surf = pygame.surface.Surface((size, size))
+                entity_surf.fill((234,23,2))
+                self.surf.blit(entity_surf, self.scroll_compensation(entity.position))
 
     def scroll_compensation(self, position):
         return position[0] - self.scroll[0], position[1] - self.scroll[1]
@@ -40,13 +55,11 @@ class Game:
 
     def run(self):
         self.client.start()
-
         while self.running:
             self.deltatime = self.clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-
 
             self.scroll[0] += (self.player.x - self.scroll[0] - (self.surf.get_width() / 2)) / 10
             self.scroll[1] += (self.player.y - self.scroll[1] - (self.surf.get_height() / 2)) / 10
@@ -57,32 +70,16 @@ class Game:
             self.player.handle_movement(keys, self.deltatime)
             if prev_state != self.player.state:
                 self.client.broadcast_state(self.player.state)
-                
 
             self.client.broadcast_position(self.player.position)
 
-            for other_player in self.client.players.copy():
-                if other_player.id != self.client.id:
-                    temp = pygame.surface.Surface((size, size))
-                    temp.fill((0,234,23))
-                    self.surf.blit(temp, self.scroll_compensation(other_player.position))
-                    if other_player.name:
-                        name = other_player.name.rstrip("\x00")
-                        text_surf = font.render(name.capitalize(), False, (255,255,255, 255))
-                        text_pos = (
-                            other_player.position[0] - self.scroll[0],
-                            other_player.position[1] - self.scroll[1]
-                            -20)
-                        self.surf.blit(text_surf, text_pos)
+            self.render_entities(self.client.players.copy())
+            self.render_entities(self.client.enemies.copy())
 
-
-           
             self.player.animate()
             self.surf.blit(self.player.surf, self.scroll_compensation(self.player.position))
 
-
-
-
+            # rendering the surf on display
             resized_surf = pygame.transform.scale(self.surf, self.display.get_size())
             self.display.blit(resized_surf, (0,0))
             pygame.display.flip()
